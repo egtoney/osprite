@@ -22,7 +22,6 @@ export namespace RenderInterface {
 		}
 		canvas.width = image.width;
 		canvas.height = image.height;
-		console.log(image.data.length);
 		const imageData = new ImageData(image.data, image.width, image.height);
 		const context = canvas.getContext("2d")!;
 		context.putImageData(imageData, 0, 0);

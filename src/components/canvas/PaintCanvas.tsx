@@ -59,7 +59,38 @@ export function PaintCanvas() {
 		return () => window.removeEventListener("resize", handleResize);
 	}, [drawingInterface]);
 
-	// #region Cut/Copy/Paste Support
+	// #region Undo/Redo Shortcut Support
+
+	useEffect(() => {
+		const listener = (e: KeyboardEvent) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			if (["INPUT", "TEXTAREA"].includes((e.target as any).tagName) || (e.target as any).isContentEditable) {
+				return; // Ignore undo/redo inside text inputs
+			}
+
+			if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+				e.preventDefault();
+				if (e.shiftKey) {
+					drawingInterface.redo();
+				} else {
+					drawingInterface.undo();
+				}
+			}
+		
+			if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+				e.preventDefault();
+				drawingInterface.redo();
+			}
+		};
+
+		document.addEventListener('keydown', listener);
+
+		return () => document.removeEventListener('keydown', listener);
+	}, [drawingInterface])
+
+	// #endregion
+
+	// #region Cut/Copy/Paste Shortcut Support
 
 	useEffect(() => {
 		const listener = async (e: ClipboardEvent) => {
