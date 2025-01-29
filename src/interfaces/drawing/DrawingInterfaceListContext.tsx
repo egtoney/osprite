@@ -38,7 +38,7 @@ export const DrawingInterfaceListProvider = (
 			for (const c of interfaces) {
 				c.setReactRenderHook(
 					() => FileInterface.saveContext(interfaces),
-					() => setInterfaces([...interfaces])
+					() => setInterfaces([...interfaces]),
 				);
 			}
 			// save open interfaces only when interfaces length changes

@@ -12,12 +12,10 @@ export function NewFileWindow(props: {
 	const [width, setWidth] = useState<string | number | undefined>(160);
 	const [height, setHeight] = useState<string | number | undefined>(160);
 	const [drawingInterfaces, setDrawingInterfaces] = useContext(
-		DrawingInterfaceListContext
+		DrawingInterfaceListContext,
 	);
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const [_, setDrawingInterfaceIndex] = useContext(
-		DrawingInterfaceContext
-	);
+	const [_, setDrawingInterfaceIndex] = useContext(DrawingInterfaceContext);
 
 	return (
 		<ModalWindow title="new image" open={props.open} setOpen={props.setOpen}>
@@ -47,7 +45,11 @@ export function NewFileWindow(props: {
 						className="icon-button"
 						onClick={() => {
 							// create new drawing interface
-							const newInterface = new DrawingInterface(Number(width), Number(height), 1);
+							const newInterface = new DrawingInterface(
+								Number(width),
+								Number(height),
+								1,
+							);
 							setDrawingInterfaces([...drawingInterfaces, newInterface]);
 							setDrawingInterfaceIndex(drawingInterfaces.length);
 

@@ -51,7 +51,12 @@ export namespace Color {
 		const rgbB = toRGB(b);
 
 		// compare each component
-		return rgbA.r === rgbB.r && rgbA.g === rgbB.g && rgbA.b === rgbB.b && rgbA.a === rgbB.a;
+		return (
+			rgbA.r === rgbB.r &&
+			rgbA.g === rgbB.g &&
+			rgbA.b === rgbB.b &&
+			rgbA.a === rgbB.a
+		);
 	}
 
 	export function parseHex(hex: string): RGBColor | null {
@@ -149,21 +154,21 @@ export namespace Color {
 	}
 
 	export function assertRGB(color: Color): asserts color is RGBColor {
-		if("r" in color && "g" in color && "b" in color && "a" in color) {
+		if ("r" in color && "g" in color && "b" in color && "a" in color) {
 			return;
 		}
 		throw new Error(`color is not RGB`);
 	}
 
 	export function assertHSV(color: Color): asserts color is HSVColor {
-		if("h" in color && "s" in color && "v" in color && "a" in color) {
+		if ("h" in color && "s" in color && "v" in color && "a" in color) {
 			return;
 		}
 		throw new Error(`color is not HSV`);
 	}
 
 	export function assertHSL(color: Color): asserts color is HSLColor {
-		if("h" in color && "s" in color && "l" in color && "a" in color) {
+		if ("h" in color && "s" in color && "l" in color && "a" in color) {
 			return;
 		}
 		throw new Error(`color is not HSL`);
@@ -325,50 +330,68 @@ export namespace Color {
 
 	export function toRGB<T extends Color>(color: T): RGBColor {
 		try {
-			assertRGB(color)
+			assertRGB(color);
 			return color;
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		try {
-			assertHSV(color)
+			assertHSV(color);
 			return hsvToRGB(color);
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		try {
-			assertHSL(color)
+			assertHSL(color);
 			return hslToRGB(color);
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		console.error(color);
 		throw new Error(`can not convert to RGB`);
 	}
 
 	export function toHSV<T extends Color>(color: T): HSVColor {
 		try {
-			assertRGB(color)
+			assertRGB(color);
 			return rgbToHSV(color);
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		try {
-			assertHSV(color)
+			assertHSV(color);
 			return color;
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		try {
-			assertHSL(color)
+			assertHSL(color);
 			return rgbToHSV(hslToRGB(color));
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		throw new Error();
 	}
 
 	export function toHSL<T extends Color>(color: T): HSLColor {
 		try {
-			assertRGB(color)
+			assertRGB(color);
 			return rgbToHSL(color);
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		try {
-			assertHSV(color)
+			assertHSV(color);
 			return rgbToHSL(hsvToRGB(color));
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		try {
-			assertHSL(color)
+			assertHSL(color);
 			return color;
-		} catch { /* empty */ }
+		} catch {
+			/* empty */
+		}
 		throw new Error();
 	}
 }

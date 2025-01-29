@@ -8,7 +8,11 @@ import {
 import { DrawingInterface } from "./DrawingInterface";
 import { DrawingInterfaceListContext } from "./DrawingInterfaceListContext";
 
-export const DEFAULT_CONTEXT: DrawingInterface = new DrawingInterface(32, 32, 1);
+export const DEFAULT_CONTEXT: DrawingInterface = new DrawingInterface(
+	32,
+	32,
+	1,
+);
 
 export const DrawingInterfaceContext = createContext<
 	[DrawingInterface, (index: number) => void]

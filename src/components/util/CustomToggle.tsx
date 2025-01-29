@@ -1,14 +1,18 @@
 import { BootstrapIconCheck } from "../icons/BootstrapIconCheck";
 import { BootstrapIconX } from "../icons/BootstrapIconX";
 
-export function CustomToggle(props: {label: string, value: boolean, onChange: (value: boolean) => void}) {
+export function CustomToggle(props: {
+	label: string;
+	value: boolean;
+	onChange: (value: boolean) => void;
+}) {
 	return (
 		<div
 			className="hover-button flex-center"
 			style={{
 				cursor: "pointer",
-				height: '100%',
-				padding: '0 4px'
+				height: "100%",
+				padding: "0 4px",
 			}}
 			onClick={() => props.onChange(!props.value)}
 		>

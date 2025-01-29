@@ -20,7 +20,7 @@ export namespace FileInterface {
 				try {
 					// @ts-expect-error: some properties could be readonly
 					clonedContext[key] = context[key];
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				} catch (e) {
 					// do nothing
 				}
@@ -30,7 +30,9 @@ export namespace FileInterface {
 		return clonedContext;
 	}
 
-	function cleanContexts(contexts: DrawingInterface[]): Partial<DrawingInterface>[] {
+	function cleanContexts(
+		contexts: DrawingInterface[],
+	): Partial<DrawingInterface>[] {
 		const clonedContexts: Partial<DrawingInterface>[] = [];
 
 		for (const context of contexts) {
@@ -97,7 +99,7 @@ export namespace FileInterface {
 		}
 
 		assert(context.save.name, "file does not have a set name");
-		
+
 		const doc = {
 			_id: `file/${context.save.name}`,
 			_rev,
@@ -111,15 +113,17 @@ export namespace FileInterface {
 
 		await db.put(doc);
 
-		console.log('saved', context.save.name);
+		console.log("saved", context.save.name);
 	}
 
 	export async function getFiles() {
-		return (await db.allDocs({
-			include_docs: true,
-			startkey: "file/",
-			endkey: "file/" + "\uffff",
-		})).rows;
+		return (
+			await db.allDocs({
+				include_docs: true,
+				startkey: "file/",
+				endkey: "file/" + "\uffff",
+			})
+		).rows;
 	}
 
 	export function getFile(id: string) {
@@ -132,7 +136,7 @@ export namespace FileInterface {
 		canvas.height = context.image.height;
 		const ctx = canvas.getContext("2d");
 
-		assert(ctx, 'Could not get Graphics2D context');
+		assert(ctx, "Could not get Graphics2D context");
 
 		// clear background
 		ctx.clearRect(0, 0, context.image.width, context.image.height);
@@ -148,12 +152,7 @@ export namespace FileInterface {
 				const a = context.image.layers[0][index + 3];
 
 				ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-				ctx.fillRect(
-					x,
-					y,
-					1,
-					1,
-				);
+				ctx.fillRect(x, y, 1, 1);
 			}
 		}
 

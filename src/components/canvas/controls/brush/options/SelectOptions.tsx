@@ -1,3 +1,3 @@
 export function SelectOptions() {
-	return <div></div>
+	return <div></div>;
 }

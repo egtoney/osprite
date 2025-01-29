@@ -1,3 +1,3 @@
 export function DropperOptions() {
-	return <div></div>
+	return <div></div>;
 }

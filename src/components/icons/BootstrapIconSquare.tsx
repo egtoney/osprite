@@ -1,6 +1,4 @@
-export function BootstrapIconSquare(
-	props: { size: number }
-) {
+export function BootstrapIconSquare(props: { size: number }) {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

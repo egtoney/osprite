@@ -44,7 +44,7 @@ export namespace Polygon {
 		return isInside;
 	}
 
-	export function aabb(polygon: Polygon): AABB {
+	export function toAabb(polygon: Polygon): AABB {
 		const xArr = polygon.map((p) => p.x);
 		const left = xArr.reduce(
 			(a, b) => (a < b ? a : b),

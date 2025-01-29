@@ -12,19 +12,16 @@ export function SaveFileWindow(props: {
 	const [name, setName] = useState("new file");
 	const [drawingInterface] = useContext(DrawingInterfaceContext);
 	const files = useAsyncMemo(() => FileInterface.getFiles(), [props.open]);
-	const invalid = useMemo(
-		() => {
-			const existing = (files ?? []).find((file) => file.id === `file/${name}`);
+	const invalid = useMemo(() => {
+		const existing = (files ?? []).find((file) => file.id === `file/${name}`);
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			if ((existing?.doc as any)?.id === drawingInterface.id) {
-				return false;
-			}
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		if ((existing?.doc as any)?.id === drawingInterface.id) {
+			return false;
+		}
 
-			return true;
-		},
-		[files, name],
-	);
+		return true;
+	}, [files, name]);
 
 	useEffect(
 		() => setName(drawingInterface.save.name ?? "new file"),

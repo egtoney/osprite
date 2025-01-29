@@ -3,10 +3,31 @@ import { Polygon } from "../Polygon";
 import { Brush } from "./Brush";
 import { Color } from "./Color";
 import { DrawingInterface } from "./DrawingInterface";
+import { ImageInterfaceSlice } from "./ImageInterface";
 
 export namespace RenderInterface {
 	const inMemCanvas1 = document.createElement("canvas");
 	const inMemCanvas2 = document.createElement("canvas");
+	const inMemSelectionCanvas = document.createElement("canvas");
+
+	/**
+	 * Renders the image slice to the passed canvas. If one is not passed a new canvas will be created.
+	 */
+	export function renderToCanvas(
+		canvas: HTMLCanvasElement | null,
+		image: ImageInterfaceSlice,
+	): HTMLCanvasElement {
+		if (canvas === null) {
+			canvas = document.createElement("canvas");
+		}
+		canvas.width = image.width;
+		canvas.height = image.height;
+		console.log(image.data.length);
+		const imageData = new ImageData(image.data, image.width, image.height);
+		const context = canvas.getContext("2d")!;
+		context.putImageData(imageData, 0, 0);
+		return canvas;
+	}
 
 	export function render(
 		instance: DrawingInterface,
@@ -75,26 +96,18 @@ export namespace RenderInterface {
 		}
 
 		// render canvas background
-		inMemCanvas1.width = instance.image.width;
-		inMemCanvas1.height = instance.image.height;
-		const bgImageData = new ImageData(
-			instance.image.bgData,
-			instance.image.width,
-			instance.image.height,
-		);
-		const inMemContext1 = inMemCanvas1.getContext("2d")!;
-		inMemContext1.putImageData(bgImageData, 0, 0);
+		renderToCanvas(inMemCanvas1, {
+			width: instance.image.width,
+			height: instance.image.height,
+			data: instance.image.bgData,
+		});
 
-		// render pixels
-		inMemCanvas2.width = instance.image.width;
-		inMemCanvas2.height = instance.image.height;
-		const imageData = new ImageData(
-			instance.image.layers[0],
-			instance.image.width,
-			instance.image.height,
-		);
-		const inMemContext2 = inMemCanvas2.getContext("2d")!;
-		inMemContext2.putImageData(imageData, 0, 0);
+		// render pixels (layer 0)
+		renderToCanvas(inMemCanvas2, {
+			width: instance.image.width,
+			height: instance.image.height,
+			data: instance.image.layers[0],
+		});
 
 		context.setTransform(
 			instance.display.zoom,
@@ -255,7 +268,7 @@ export namespace RenderInterface {
 			return;
 		}
 
-		const aabb = Polygon.aabb([
+		const aabb = Polygon.toAabb([
 			instance.toImageCoords(
 				instance.toPointerCoords(instance.brush.press.start),
 			),
@@ -279,23 +292,39 @@ export namespace RenderInterface {
 		if (!instance.selection) {
 			return;
 		}
-		const aabb = Polygon.aabb(instance.selection.points);
+		const tx = Math.round(
+			(instance.display.width - instance.display.zoom * instance.image.width) /
+				2 +
+				instance.display.dx,
+		);
+		const ty = Math.round(
+			(instance.display.height -
+				instance.display.zoom * instance.image.height) /
+				2 +
+				instance.display.dy,
+		);
+		const aabb = Polygon.toAabb(instance.selection.points);
 
 		const left = aabb.x + instance.selection.translation.x;
 		const top = aabb.y + instance.selection.translation.y;
 		const right = left + aabb.width;
 		const bottom = top + aabb.height;
 
-		// render image
-		for (const pixel of instance.selection.colors) {
-			context.fillStyle = Color.toStringRGBA(pixel.color);
-			context.fillRect(
-				(pixel.x + left) * instance.display.zoom,
-				(pixel.y + top) * instance.display.zoom,
-				instance.display.zoom,
-				instance.display.zoom,
-			);
+		// render selected slice
+		if (instance.selection.data.data.length === 0) {
+			console.log(instance.selection);
 		}
+		renderToCanvas(inMemSelectionCanvas, instance.selection.data);
+		context.setTransform(
+			instance.display.zoom,
+			0,
+			0,
+			instance.display.zoom,
+			tx,
+			ty,
+		);
+		context.drawImage(inMemSelectionCanvas, left, top);
+		context.setTransform(1, 0, 0, 1, tx, ty);
 
 		renderSelectionRect(instance, context, left, right, top, bottom);
 

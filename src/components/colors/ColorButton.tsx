@@ -47,7 +47,9 @@ export function ColorButton(props: {
 						flexGrow: 1,
 						backgroundColor: Color.toStringRGBA(Color.toRGB(props.color)),
 						color: Color.toStringRGBA(
-							Color.getBestTextColor(Color.blend(Color.toRGB(props.color), Color.WHITE)),
+							Color.getBestTextColor(
+								Color.blend(Color.toRGB(props.color), Color.WHITE),
+							),
 						),
 						display: "flex",
 						justifyContent: "center",

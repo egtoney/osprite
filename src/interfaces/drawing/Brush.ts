@@ -12,7 +12,7 @@ export enum Brush {
 	ERASER,
 	DROPPER,
 	ZOOM,
-	PAN
+	PAN,
 }
 
 export namespace Brush {

@@ -11,38 +11,38 @@ export function ModalWindow(
 		<div
 			style={{
 				visibility: props.open ? "visible" : "hidden",
-				position: 'fixed',
+				position: "fixed",
 				inset: 0,
 				zIndex: 100,
 				display: "flex",
-				alignItems: 'center',
-				justifyContent: 'center',
+				alignItems: "center",
+				justifyContent: "center",
 			}}
 		>
 			<div
 				style={{
-					position: 'absolute',
-					width: '100%',
-					height: '100%',
-					backgroundColor: 'rgba(0, 0, 0, .1)'
+					position: "absolute",
+					width: "100%",
+					height: "100%",
+					backgroundColor: "rgba(0, 0, 0, .1)",
 				}}
 				onClick={() => props.setOpen(false)}
 			/>
 			<div
 				style={{
-					border: '1px solid black',
+					border: "1px solid black",
 					zIndex: 101,
-					display: 'flex',
-					flexDirection: 'column',
-					backgroundColor: 'white',
+					display: "flex",
+					flexDirection: "column",
+					backgroundColor: "white",
 					borderRadius: 2,
-					overflow: "hidden"
+					overflow: "hidden",
 				}}
 			>
 				<div
 					style={{
 						padding: 4,
-						backgroundColor: 'rgba(0, 0, 0, 0.2)'
+						backgroundColor: "rgba(0, 0, 0, 0.2)",
 					}}
 				>
 					{props.title}

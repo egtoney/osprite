@@ -2,8 +2,9 @@ import { v4 } from "uuid";
 import { Polygon } from "../Polygon";
 import { Brush } from "./Brush";
 import { Color, RGBColor } from "./Color";
-import { ImageInterface } from "./ImageInterface";
+import { ImageInterfaceSlice, ImageInterface } from "./ImageInterface";
 import { Vec2 } from "./Vec2";
+import { assert } from "../../lib/lang";
 
 export enum PencilShape {
 	CIRCLE,
@@ -75,7 +76,38 @@ interface SelectInterface {
 	cursorOffset: Vec2;
 	translation: Vec2;
 	points: Polygon;
-	colors: ColorVec[];
+	data: ImageInterfaceSlice;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace SelectInterface {
+	export function fromImage(image: ImageInterfaceSlice): SelectInterface {
+		return {
+			moving: false,
+			cursorOffset: { x: 0, y: 0 },
+			translation: { x: 0, y: 0 },
+			points: [
+				{ x: 0, y: 0 },
+				{ x: image.width, y: 0 },
+				{ x: image.width, y: image.height },
+				{ x: 0, y: image.height },
+			],
+			data: image,
+		};
+	}
+
+	export function clearSelection(instance: DrawingInterface): void {
+		if (instance.selection) {
+			const oldAABB = Polygon.toAabb(instance.selection.points);
+			ImageInterface.insertIntoLayer(
+				instance,
+				0,
+				oldAABB,
+				instance.selection.data,
+				true,
+			);
+		}
+	}
 }
 
 export class DrawingInterface {
@@ -475,100 +507,95 @@ export class DrawingInterface {
 
 	private useBrushSelect(trigger: BrushTrigger, ix: number, iy: number) {
 		// if cursor is in selection consider it a move
-		if (trigger === BrushTrigger.START && this.selection) {
-			// check if ix, iy in selection
-			if (Polygon.contains(this.selection.points, { x: ix, y: iy })) {
+		if (trigger === BrushTrigger.START) {
+			// check if ix, iy in an existing selection (this would be a move)
+			if (
+				this.selection &&
+				Polygon.contains(this.selection.points, { x: ix, y: iy })
+			) {
 				this.selection.moving = true;
 			}
 		}
 
 		// if cursor moving
-		if (trigger === BrushTrigger.MOVE && this.selection?.moving) {
-			const start = this.toImageCoords(
-				this.toPointerCoords(this.brush.press.start),
-			);
-			const delta = Vec2.diff({ x: ix, y: iy }, start);
-			this.selection.translation = delta;
+		if (trigger === BrushTrigger.MOVE) {
+			// move selection flagged for move
+			if (this.selection?.moving === true) {
+				const start = this.toImageCoords(
+					this.toPointerCoords(this.brush.press.start),
+				);
+				const delta = Vec2.diff({ x: ix, y: iy }, start);
+				this.selection.translation = delta;
+			}
 		}
 
-		//
+		// if cursor ended
 		if (trigger === BrushTrigger.END) {
-			// move selection to new location
 			if (this.selection?.moving === true) {
+				// option 1: if we were moving a selection, end the move and update the location of the selection
 				this.selection.moving = false;
 				this.selection.points.forEach((pt) => {
 					pt.x += this.selection!.translation.x;
 					pt.y += this.selection!.translation.y;
 				});
 				this.selection.translation = { x: 0, y: 0 };
-
-				// start a new selection
 			} else {
-				const pt1 = this.toImageCoords(
-					this.toPointerCoords({ ...this.brush.press.start }),
-				);
-				const pt2 = { x: ix, y: iy };
+				// option 2: start a new selection with the cursor coordinates
 
-				const diff = {
-					x: Math.abs(pt2.x - pt1.x),
-					y: Math.abs(pt2.y - pt1.y),
-				};
+				// before we can start a new selection we must end the previous selection
+				if (this.selection !== undefined) {
+					SelectInterface.clearSelection(this);
+					delete this.selection;
+				}
+
+				// compute selection polygon
+				const pt1 = Vec2.clamp(
+					this.toImageCoords(
+						this.toPointerCoords({ ...this.brush.press.start }),
+					),
+					{ x: 0, y: 0 },
+					{ x: this.image.width, y: this.image.height },
+				);
+				const pt2 = Vec2.clamp(
+					{ x: ix, y: iy },
+					{ x: 0, y: 0 },
+					{ x: this.image.width, y: this.image.height },
+				);
 				const points = [
 					pt1,
 					{ x: pt1.x, y: pt2.y },
 					pt2,
 					{ x: pt2.x, y: pt1.y },
 				];
-				const aabb = Polygon.aabb(points);
+				const aabb = Polygon.toAabb(points);
 
-				// only set selection if width and height greater than zero
-				if (Vec2.equal(pt1, pt2) || diff.x === 0 || diff.y === 0) {
-					// apply active selection to image if one exists
-					if (this.selection) {
-						const oldAABB = Polygon.aabb(this.selection.points);
-						for (const pixel of this.selection.colors) {
-							ImageInterface.setColor(
-								this,
-								pixel.x + oldAABB.x,
-								pixel.y + oldAABB.y,
-								pixel.color,
-								true,
-							);
-						}
-					}
-					delete this.selection;
-				} else {
-					// cut selection part of image
-					const colors: ColorVec[] = [];
-					for (let x = aabb.x; x < aabb.x + aabb.width; x++) {
-						for (let y = aabb.y; y < aabb.y + aabb.height; y++) {
-							const color = ImageInterface.getColor(this, x, y);
-							if (color && !Color.equal(Color.CLEAR, color)) {
-								ImageInterface.setColor(this, x, y, Color.CLEAR, true);
-								colors.push({
-									x: x - aabb.x,
-									y: y - aabb.y,
-									color,
-								});
-							}
-						}
-					}
-
-					// create the new selection
-					this.selection = {
-						moving: false,
-						cursorOffset: { x: 0, y: 0 },
-						translation: { x: 0, y: 0 },
-						colors,
-						points,
-					};
+				// check that the new selection wasn't just an empty click
+				if (aabb.width === 0 || aabb.height === 0) {
+					return;
 				}
+
+				// cut selection out of image
+				const data: ImageInterfaceSlice = ImageInterface.spliceLayer(
+					this.image,
+					0,
+					aabb,
+				);
+				assert(data.data.length > 0);
+
+				// create the new selection
+				this.selection = {
+					moving: false,
+					cursorOffset: { x: 0, y: 0 },
+					translation: { x: 0, y: 0 },
+					data,
+					points,
+				};
 			}
 		}
 	}
 
 	private useBrushPencil(_trigger: BrushTrigger, ix: number, iy: number) {
-		if (!ImageInterface.inImage(this, ix, iy)) {
+		if (!ImageInterface.pointInImage(this, ix, iy)) {
 			return;
 		}
 
@@ -580,7 +607,7 @@ export class DrawingInterface {
 	}
 
 	private useBrushEraser(_trigger: BrushTrigger, ix: number, iy: number) {
-		if (!ImageInterface.inImage(this, ix, iy)) {
+		if (!ImageInterface.pointInImage(this, ix, iy)) {
 			return;
 		}
 
@@ -596,7 +623,7 @@ export class DrawingInterface {
 	}
 
 	private useBrushDropper(_trigger: BrushTrigger, ix: number, iy: number) {
-		if (!ImageInterface.inImage(this, ix, iy)) {
+		if (!ImageInterface.pointInImage(this, ix, iy)) {
 			return;
 		}
 

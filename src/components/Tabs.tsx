@@ -35,11 +35,11 @@ export function Tab(props: { focused: boolean; name: string; index: number }) {
 			<div
 				style={{ display: "flex", alignItems: "center" }}
 				onClick={() => {
-					console.log('removing', interfaces, props.index);
+					console.log("removing", interfaces, props.index);
 					interfaces.splice(props.index, 1);
 
 					setInterfaces([...interfaces]);
-					
+
 					// if (props.focused) {
 					// 	setInterface(Math.max(0, props.index - 1));
 					// }

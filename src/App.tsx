@@ -17,7 +17,7 @@ function App() {
 			>
 				<Navbar />
 				<Tabs />
-				<AppBody/>
+				<AppBody />
 			</div>
 		</DrawingInterfaceListProvider>
 	);

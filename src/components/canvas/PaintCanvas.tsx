@@ -1,6 +1,8 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useEventListener } from "../../hooks/useEventListener";
 import { Brush } from "../../interfaces/drawing/Brush";
+import { ClipboardInterface } from "../../interfaces/drawing/ClipboardInterface";
+import { SelectInterface } from "../../interfaces/drawing/DrawingInterface";
 import { DrawingInterfaceContext } from "../../interfaces/drawing/DrawingInterfaceContext";
 import { RenderInterface } from "../../interfaces/drawing/RenderInterface";
 import { Vec2 } from "../../interfaces/drawing/Vec2";
@@ -32,31 +34,94 @@ export function PaintCanvas() {
 	});
 	const [isZooming, setIsZooming] = useState(false);
 
-	function handleResize() {
-		if (wrapperRef.current && canvasRef.current) {
-			const wrapper = wrapperRef.current;
-			const bounding = canvasRef.current.getBoundingClientRect();
-
-			setCanvasWidth(wrapper.clientWidth);
-			setCanvasHeight(wrapper.clientHeight);
-
-			drawingInterface.setDisplaySize(
-				bounding.left,
-				bounding.top,
-				wrapper.clientWidth,
-				wrapper.clientHeight,
-			);
-		}
-	}
-
 	/**
 	 * Resizes the game canvas to fill wrapper
 	 */
 	useEffect(() => {
+		function handleResize() {
+			if (wrapperRef.current && canvasRef.current) {
+				const wrapper = wrapperRef.current;
+				const bounding = canvasRef.current.getBoundingClientRect();
+
+				setCanvasWidth(wrapper.clientWidth);
+				setCanvasHeight(wrapper.clientHeight);
+
+				drawingInterface.setDisplaySize(
+					bounding.left,
+					bounding.top,
+					wrapper.clientWidth,
+					wrapper.clientHeight,
+				);
+			}
+		}
 		window.addEventListener("resize", handleResize);
 		handleResize();
 		return () => window.removeEventListener("resize", handleResize);
 	}, [drawingInterface]);
+
+	// #region Cut/Copy/Paste Support
+
+	useEffect(() => {
+		const listener = async (e: ClipboardEvent) => {
+			const decoded = await ClipboardInterface.handlePaste(e);
+
+			if (decoded) {
+				// clear current selection
+				SelectInterface.clearSelection(drawingInterface);
+
+				// start a new selection with the pasted image
+				drawingInterface.selection = SelectInterface.fromImage(decoded);
+				drawingInterface.queueRender();
+			}
+		};
+		document.addEventListener("paste", listener);
+
+		return () => document.removeEventListener("paste", listener);
+	}, [drawingInterface]);
+
+	useEffect(() => {
+		const listener = (e: ClipboardEvent) => {
+			e.preventDefault();
+
+			if (drawingInterface.selection && e.clipboardData) {
+				e.clipboardData.setData(
+					"text/plain",
+					RenderInterface.renderToCanvas(
+						null,
+						drawingInterface.selection.data,
+					).toDataURL("image/png"),
+				);
+			}
+		};
+		document.addEventListener("copy", listener);
+
+		return () => document.removeEventListener("copy", listener);
+	}, [drawingInterface]);
+
+	useEffect(() => {
+		const listener = (e: ClipboardEvent) => {
+			e.preventDefault();
+
+			if (drawingInterface.selection && e.clipboardData) {
+				// same as above in copy
+				e.clipboardData.setData(
+					"text/plain",
+					RenderInterface.renderToCanvas(
+						null,
+						drawingInterface.selection.data,
+					).toDataURL("image/png"),
+				);
+
+				// difference, clear selection
+				delete drawingInterface.selection;
+			}
+		};
+		document.addEventListener("cut", listener);
+
+		return () => document.removeEventListener("cut", listener);
+	});
+
+	// #endregion
 
 	/**
 	 * Events
@@ -210,8 +275,9 @@ export function PaintCanvas() {
 				1,
 				Math.min(drawingInterface.wheel, 64),
 			);
-			
-			const delta = Math.round(drawingInterface.wheel) - drawingInterface.display.zoom;
+
+			const delta =
+				Math.round(drawingInterface.wheel) - drawingInterface.display.zoom;
 			if (delta !== 0) {
 				drawingInterface.updateZoom(delta);
 			}
@@ -244,21 +310,16 @@ export function PaintCanvas() {
 		// zoom reference point
 		const ref: Vec2 = {
 			x: currTouchCenter.x - drawingInterface.display.dx,
-			y: currTouchCenter.y - drawingInterface.display.dy
+			y: currTouchCenter.y - drawingInterface.display.dy,
 		};
 
 		// try zoom
 		const diffZoom = Math.round(Math.abs(currTouch - startTouch) / 75);
 		if (diffZoom > 0) {
-			const newZoom = currTouch < startTouch
-				? Math.max(
-					1,
-					Math.min(startZoom - diffZoom, 64),
-				)
-				: Math.max(
-					1,
-					Math.min(startZoom + diffZoom, 64),
-				);
+			const newZoom =
+				currTouch < startTouch
+					? Math.max(1, Math.min(startZoom - diffZoom, 64))
+					: Math.max(1, Math.min(startZoom + diffZoom, 64));
 			const delta = newZoom - drawingInterface.display.zoom;
 
 			drawingInterface.updateZoom(delta, ref);
@@ -295,9 +356,9 @@ export function PaintCanvas() {
 
 		return () => {
 			if (handle) {
-				cancelAnimationFrame(handle)
+				cancelAnimationFrame(handle);
 			}
-		}
+		};
 	}, [drawingInterface]);
 
 	/**
