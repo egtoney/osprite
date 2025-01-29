@@ -1,0 +1,120 @@
+* {
+	font-family: "Courier New", Courier, monospace;
+	touch-action: none;
+	/* font-family: Monaco, 'Courier New', monospace; */
+}
+
+html,
+body,
+#root {
+	height: 100%; /* Ensure the body fills the viewport */
+	margin: 0;
+	user-select: none; /* Disable text selection */
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* Internet Explorer/Edge */
+}
+
+button {
+	border: 1px solid black;
+	border-radius: 0px;
+	margin: 0;
+	padding: 0;
+	color: black;
+}
+
+*[data-invalid=true] {
+	border-color: red;
+	background-color: rgba(255, 0, 0, .1);
+}
+
+input[type="text"] {
+	border: 1px solid black;
+	border-radius: 2px;
+	height: 25px;
+	padding: 0;
+	box-shadow: 0px 1px 1px black;
+	padding: 0 2px;
+	box-sizing: border-box;
+}
+
+.icon-button-spacer {
+	width: 30px;
+	height: 25px;
+}
+
+.icon-button-sm {
+	width: 30px;
+}
+
+.icon-button {
+	border: 1px solid black;
+	height: 25px;
+	background-color: rgba(0, 0, 0, 0);
+	border-radius: 2px;
+	overflow: hidden;
+	box-shadow: 0px 1px 1px black;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+}
+
+.icon-button:hover {
+	background-color: rgba(0, 0, 0, 0.2);
+}
+
+.icon-button:disabled {
+	background-color: rgba(0, 0, 0, 0.1);
+}
+
+.hover-button {
+	border-radius: 2px;
+}
+
+.hover-button:hover {
+	background-color: rgba(0, 0, 0, 0.2);
+}
+
+.icon-button-space-right {
+	margin-right: 8px;
+}
+
+.bg-green-0 {
+	background-color: rgba(155, 188, 15, 1);
+}
+
+.bg-green-1 {
+	background-color: rgba(139, 172, 15, 1);
+}
+
+.bg-green-2 {
+	background-color: rgba(48, 98, 48, 1);
+}
+
+.bg-green-3 {
+	background-color: rgba(15, 56, 15, 1);
+}
+
+.checkerboard {
+	width: 200px;
+	height: 200px;
+	background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
+		linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+	background-size: 20px 20px; /* Adjust for square size */
+	background-position:
+		0 0,
+		10px 10px; /* Offset for the second layer */
+}
+
+.no-select {
+	user-select: none; /* Disable text selection */
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* Internet Explorer/Edge */
+}
+
+.flex-center {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}

@@ -1,0 +1,17 @@
+.wrapper-outer {
+	flex-grow: 1;
+	background-color: #242526;
+	overflow: hidden;
+	border: 1px solid black;
+	border-radius: 2px;
+}
+
+.wrapper-outer canvas {
+	cursor: none;
+	position: absolute;
+	display: block;
+	image-rendering: -moz-crisp-edges;
+	image-rendering: -webkit-crisp-edges;
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+}

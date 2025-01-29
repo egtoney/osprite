@@ -1,0 +1,19 @@
+.custom-table {
+	display: flex;
+	flex-direction: column;
+}
+
+.custom-table .custom-table-row {
+	display: flex;
+	flex-direction: row;
+}
+
+.custom-table .custom-table-row:hover {
+	background-color: rgba(0, 0, 0, .1);
+}
+
+.custom-table .custom-table-col {
+	padding: 4px;
+	display: flex;
+	align-items: end;
+}
