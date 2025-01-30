@@ -63,8 +63,12 @@ export function PaintCanvas() {
 
 	useEffect(() => {
 		const listener = (e: KeyboardEvent) => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			if (["INPUT", "TEXTAREA"].includes((e.target as any).tagName) || (e.target as any).isContentEditable) {
+			if (
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				["INPUT", "TEXTAREA"].includes((e.target as any).tagName) ||
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(e.target as any).isContentEditable
+			) {
 				return; // Ignore undo/redo inside text inputs
 			}
 
@@ -76,17 +80,17 @@ export function PaintCanvas() {
 					drawingInterface.undo();
 				}
 			}
-		
+
 			if ((e.ctrlKey || e.metaKey) && e.key === "y") {
 				e.preventDefault();
 				drawingInterface.redo();
 			}
 		};
 
-		document.addEventListener('keydown', listener);
+		document.addEventListener("keydown", listener);
 
-		return () => document.removeEventListener('keydown', listener);
-	}, [drawingInterface])
+		return () => document.removeEventListener("keydown", listener);
+	}, [drawingInterface]);
 
 	// #endregion
 

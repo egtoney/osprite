@@ -116,6 +116,41 @@ export namespace Color {
 		return `#${color.r.toString(16).padStart(2, "0")}${color.g.toString(16).padStart(2, "0")}${color.b.toString(16).padStart(2, "0")}${color.a.toString(16).padStart(2, "0")}`;
 	}
 
+	/**
+	 * Blends the foreground color onto the background color.
+	 * - When fg alpha is 255 the foreground replaces the background
+	 * - When fg alpha is 0 the foreground erases the background
+	 * - Otherwise the foreground is blended with the background using alpha compositing
+	 */
+	export function blendNormal(bg: RGBColor, fg: RGBColor): RGBColor {
+		if (fg.a === 255) {
+			return fg;
+		}
+
+		if (fg.a === 0) {
+			return Color.CLEAR;
+		}
+
+		const fgA = fg.a / 255;
+		const bgA = bg.a / 255;
+		const alpha = fgA + bgA * (1 - fgA);
+		if (alpha === 0) {
+			return Color.CLEAR;
+		}
+
+		const red = (fg.r * fgA + bg.r * bgA * (1 - fgA)) / alpha;
+		const green = (fg.g * fgA + bg.g * bgA * (1 - fgA)) / alpha;
+		const blue = (fg.b * fgA + bg.b * bgA * (1 - fgA)) / alpha;
+
+		return {
+			r: Math.round(red),
+			g: Math.round(green),
+			b: Math.round(blue),
+			a: Math.round(255 * alpha),
+		};
+	}
+
+	/** */
 	export function blend(foreground: RGBColor, background: RGBColor): RGBColor {
 		const alpha = foreground.a / 255;
 		return {

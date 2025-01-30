@@ -2,6 +2,7 @@
 
 import { assert } from "../../lib/lang";
 import { AABB } from "../AABB";
+import { BlendMode } from "./Blend";
 import { Color, RGBColor } from "./Color";
 import { DrawingHistory } from "./DrawingHistory";
 import { DrawingInterface } from "./DrawingInterface";
@@ -139,7 +140,20 @@ export namespace ImageInterface {
 		buffer: Uint8ClampedArray,
 		index: number,
 		color: RGBColor,
+		mode: BlendMode,
 	) {
+		// blend using alpha channel
+		if (mode === BlendMode.NORMAL) {
+			const baseColor: RGBColor = {
+				r: buffer[index],
+				g: buffer[index + 1],
+				b: buffer[index + 2],
+				a: buffer[index + 3],
+			};
+
+			color = Color.blendNormal(baseColor, color);
+		}
+
 		buffer[index] = color.r;
 		buffer[index + 1] = color.g;
 		buffer[index + 2] = color.b;
@@ -151,11 +165,19 @@ export namespace ImageInterface {
 		targetIndex: number,
 		sourceBuffer: Uint8ClampedArray,
 		sourceIndex: number,
+		mode: BlendMode,
 	) {
-		targetBuffer[targetIndex] = sourceBuffer[sourceIndex];
-		targetBuffer[targetIndex + 1] = sourceBuffer[sourceIndex + 1];
-		targetBuffer[targetIndex + 2] = sourceBuffer[sourceIndex + 2];
-		targetBuffer[targetIndex + 3] = sourceBuffer[sourceIndex + 3];
+		nwriteColor(
+			targetBuffer,
+			targetIndex,
+			{
+				r: sourceBuffer[sourceIndex],
+				g: sourceBuffer[sourceIndex + 1],
+				b: sourceBuffer[sourceIndex + 2],
+				a: sourceBuffer[sourceIndex + 3],
+			},
+			mode,
+		);
 	}
 
 	export function setColor(
@@ -164,6 +186,7 @@ export namespace ImageInterface {
 		y: number,
 		color: RGBColor,
 		historize: boolean,
+		mode: BlendMode,
 	): void {
 		// TODO: eventually support layers
 		const layerIndex = 0;
@@ -188,13 +211,13 @@ export namespace ImageInterface {
 		// grab current color
 		const oldColor: RGBColor = nreadColor(layer, index);
 
-		// do nothing if colors are equal
-		if (Color.equal(oldColor, color)) {
+		// do nothing if colors are equal and alpha is 255
+		if (Color.equal(oldColor, color) && color.a === 255) {
 			return;
 		}
 
 		// update color
-		nwriteColor(layer, index, color);
+		nwriteColor(layer, index, color, mode);
 
 		// update history
 		if (historize) {
@@ -236,12 +259,12 @@ export namespace ImageInterface {
 			for (let x = clampedRegion.x; x < clampedRight; x++) {
 				const readIndex = 4 * (x + y * instance.width);
 
-				// read color
-				ncopyColor(buffer, writeIndex, layer, readIndex);
+				// write color
+				ncopyColor(buffer, writeIndex, layer, readIndex, BlendMode.REPLACE);
 				writeIndex += 4;
 
 				// clear color
-				nwriteColor(layer, readIndex, clearColor);
+				nwriteColor(layer, readIndex, clearColor, BlendMode.REPLACE);
 			}
 		}
 
@@ -263,11 +286,24 @@ export namespace ImageInterface {
 		const layer = instance.image.layers[layerIndex];
 		assert(layer, "invalid layer index passed");
 
-		// clamp slice region to image size
-		const clampedRegion = AABB.clamp(
-			{ x: offset.x, y: offset.y, width: slice.width, height: slice.height },
-			AABB.fromSize(instance.image.width, instance.image.height),
+		const imageRegion = AABB.fromSize(
+			instance.image.width,
+			instance.image.height,
 		);
+
+		// do nothing if slice does not overlap with the image
+		const region = {
+			x: offset.x,
+			y: offset.y,
+			width: slice.width,
+			height: slice.height,
+		};
+		if (!AABB.intersect(region, imageRegion)) {
+			return;
+		}
+
+		// clamp slice region to image size
+		const clampedRegion = AABB.clamp(region, imageRegion);
 		const clampedRight = clampedRegion.x + clampedRegion.width;
 		const clampedBottom = clampedRegion.y + clampedRegion.height;
 
@@ -281,7 +317,7 @@ export namespace ImageInterface {
 				const oldColor = historize && nreadColor(layer, writeIndex);
 
 				// write color
-				ncopyColor(layer, writeIndex, slice.data, readIndex);
+				ncopyColor(layer, writeIndex, slice.data, readIndex, BlendMode.NORMAL);
 
 				// update history
 				if (historize === true) {

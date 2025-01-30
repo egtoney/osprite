@@ -1,10 +1,11 @@
 import { v4 } from "uuid";
+import { assert } from "../../lib/lang";
 import { Polygon } from "../Polygon";
+import { BlendMode } from "./Blend";
 import { Brush } from "./Brush";
 import { Color, RGBColor } from "./Color";
-import { ImageInterfaceSlice, ImageInterface } from "./ImageInterface";
+import { ImageInterface, ImageInterfaceSlice } from "./ImageInterface";
 import { Vec2 } from "./Vec2";
-import { assert } from "../../lib/lang";
 
 export enum PencilShape {
 	CIRCLE,
@@ -98,14 +99,14 @@ export namespace SelectInterface {
 
 	export function clearSelection(instance: DrawingInterface): void {
 		if (instance.selection) {
-			const oldAABB = Polygon.toAabb(instance.selection.points);
 			ImageInterface.insertIntoLayer(
 				instance,
 				0,
-				oldAABB,
+				Polygon.toAabb(instance.selection.points),
 				instance.selection.data,
 				true,
 			);
+			delete instance.selection;
 		}
 	}
 }
@@ -305,7 +306,14 @@ export class DrawingInterface {
 
 		// for each point undo change
 		for (const change of history.changes) {
-			ImageInterface.setColor(this, change.x, change.y, change.oldColor, false);
+			ImageInterface.setColor(
+				this,
+				change.x,
+				change.y,
+				change.oldColor,
+				false,
+				BlendMode.REPLACE,
+			);
 		}
 
 		// push onto the undo history buffer
@@ -329,7 +337,14 @@ export class DrawingInterface {
 
 		// for each point undo change
 		for (const change of history.changes) {
-			ImageInterface.setColor(this, change.x, change.y, change.color, false);
+			ImageInterface.setColor(
+				this,
+				change.x,
+				change.y,
+				change.color,
+				false,
+				BlendMode.REPLACE,
+			);
 		}
 
 		// push onto the undo buffer
@@ -385,6 +400,7 @@ export class DrawingInterface {
 
 		// flag brush as being pressed
 		this.brush.press.pressed = true;
+		this.brush.press.miscData = {};
 
 		// map mouse button to virtual brush button
 		switch (button ?? 0) {
@@ -545,7 +561,6 @@ export class DrawingInterface {
 				// before we can start a new selection we must end the previous selection
 				if (this.selection !== undefined) {
 					SelectInterface.clearSelection(this);
-					delete this.selection;
 				}
 
 				// compute selection polygon
@@ -602,7 +617,25 @@ export class DrawingInterface {
 		const rgbColor = Color.toRGB(this.currentColor());
 
 		for (const point of this.pencilShape()) {
-			ImageInterface.setColor(this, ix + point.x, iy + point.y, rgbColor, true);
+			// check that we have not already painted this pixel
+			const paintedMap: any =
+				this.brush.press.miscData["painted"] ??
+				(this.brush.press.miscData["painted"] = {});
+			const index = `${ix + point.x},${iy + point.y}`;
+			if (paintedMap[index]) {
+				continue;
+			}
+			paintedMap[index] = true;
+
+			// actually paint the pixel
+			ImageInterface.setColor(
+				this,
+				ix + point.x,
+				iy + point.y,
+				rgbColor,
+				true,
+				BlendMode.NORMAL,
+			);
 		}
 	}
 
@@ -618,6 +651,7 @@ export class DrawingInterface {
 				iy + point.y,
 				Color.CLEAR,
 				true,
+				BlendMode.REPLACE,
 			);
 		}
 	}
