@@ -5,7 +5,7 @@ import { ColorControls } from "./components/canvas/controls/ColorControls";
 import {
 	DEFAULT_CONTEXT,
 	DrawingInterfaceContext,
-} from "./interfaces/drawing/DrawingInterfaceContext";
+} from "./interfaces/drawing/react/DrawingInterfaceContext";
 import { Footer } from "./components/Footer";
 
 export function AppBody() {

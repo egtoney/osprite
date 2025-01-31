@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { Polygon } from "../Polygon";
-import { Brush } from "./Brush";
-import { Color } from "./Color";
+import { Brush } from "./brush/Brush";
+import { BrushInterface } from "./brush/BrushInterface";
+import { Color } from "./color/Color";
+import { ColorInterface } from "./color/ColorInterface";
+import { CoordinateInterface } from "./CoordinateInterface";
 import { DrawingInterface } from "./DrawingInterface";
 import { ImageInterfaceSlice } from "./ImageInterface";
 
@@ -141,6 +144,13 @@ export namespace RenderInterface {
 		}
 	}
 
+	export function queueRender(instance: DrawingInterface) {
+		instance.shouldRender = true;
+		if (instance.renderHook !== undefined) {
+			instance.renderHook();
+		}
+	}
+
 	export function renderSelectionRect(
 		instance: DrawingInterface,
 		context: CanvasRenderingContext2D,
@@ -268,10 +278,17 @@ export namespace RenderInterface {
 		}
 
 		const aabb = Polygon.toAabb([
-			instance.toImageCoords(
-				instance.toPointerCoords(instance.brush.press.start),
+			CoordinateInterface.toImageCoords(
+				instance,
+				CoordinateInterface.toPointerCoords(
+					instance,
+					instance.brush.press.start,
+				),
 			),
-			instance.toImageCoords(instance.toPointerCoords(instance.cursor)),
+			CoordinateInterface.toImageCoords(
+				instance,
+				CoordinateInterface.toPointerCoords(instance, instance.cursor),
+			),
 		]);
 
 		renderSelectionRect(
@@ -341,11 +358,11 @@ export namespace RenderInterface {
 		context.fillStyle = "white";
 
 		// render precise location
-		const pointer = instance.pointerCoords();
+		const pointer = CoordinateInterface.pointerCoords(instance);
 		context.fillRect(pointer.x, pointer.y, 1, 1);
 
 		// render aim hairs
-		const [ax, ay] = instance.gridCoords();
+		const [ax, ay] = CoordinateInterface.gridCoords(instance);
 
 		// top left
 		context.fillRect(ax - 3, ay - 1, 3, 1);
@@ -379,12 +396,12 @@ export namespace RenderInterface {
 		context: CanvasRenderingContext2D,
 	) {
 		// convert current color to rgb
-		const rgbColor = Color.toRGB(instance.currentColor());
+		const rgbColor = Color.toRGB(ColorInterface.currentColor(instance));
 
 		// render pixel (if drawn)
 		context.fillStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${rgbColor.a / 255})`;
-		const [ax, ay] = instance.gridCoords();
-		for (const point of instance.pencilShape()) {
+		const [ax, ay] = CoordinateInterface.gridCoords(instance);
+		for (const point of BrushInterface.brushShape(instance)) {
 			context.fillRect(
 				ax + instance.display.zoom * point.x,
 				ay + instance.display.zoom * point.y,
@@ -395,7 +412,7 @@ export namespace RenderInterface {
 
 		// render precise location
 		context.fillStyle = "white";
-		const pointer = instance.pointerCoords();
+		const pointer = CoordinateInterface.pointerCoords(instance);
 		context.fillRect(pointer.x, pointer.y, 1, 1);
 		context.fillRect(pointer.x - 3, pointer.y, 2, 1);
 		context.fillRect(pointer.x + 2, pointer.y, 2, 1);
@@ -410,12 +427,12 @@ export namespace RenderInterface {
 		context.fillStyle = "white";
 
 		// render precise location
-		const pointer = instance.pointerCoords();
+		const pointer = CoordinateInterface.pointerCoords(instance);
 		context.fillRect(pointer.x, pointer.y, 1, 1);
 
 		// render aim hairs
-		const [ax, ay] = instance.gridCoords();
-		for (const point of instance.pencilShape()) {
+		const [ax, ay] = CoordinateInterface.gridCoords(instance);
+		for (const point of BrushInterface.brushShape(instance)) {
 			// top
 			context.fillRect(
 				ax + point.x * instance.display.zoom,
@@ -454,11 +471,11 @@ export namespace RenderInterface {
 		context.fillStyle = "white";
 
 		// render precise location
-		const pointer = instance.pointerCoords();
+		const pointer = CoordinateInterface.pointerCoords(instance);
 		context.fillRect(pointer.x, pointer.y, 1, 1);
 
 		// render aim hairs
-		const [ax, ay] = instance.gridCoords();
+		const [ax, ay] = CoordinateInterface.gridCoords(instance);
 
 		// top
 		context.fillRect(ax, ay - 1, instance.display.zoom, 1);

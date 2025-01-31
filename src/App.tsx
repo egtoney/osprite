@@ -2,7 +2,7 @@ import "./App.css";
 import { AppBody } from "./AppBody";
 import { Navbar } from "./components/navbar/Navbar";
 import { Tabs } from "./components/Tabs";
-import { DrawingInterfaceListProvider } from "./interfaces/drawing/DrawingInterfaceListContext";
+import { DrawingInterfaceListProvider } from "./interfaces/drawing/react/DrawingInterfaceListContext";
 
 function App() {
 	return (

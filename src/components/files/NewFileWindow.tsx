@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { DrawingInterface } from "../../interfaces/drawing/DrawingInterface";
-import { DrawingInterfaceContext } from "../../interfaces/drawing/DrawingInterfaceContext";
-import { DrawingInterfaceListContext } from "../../interfaces/drawing/DrawingInterfaceListContext";
+import { DrawingInterfaceContext } from "../../interfaces/drawing/react/DrawingInterfaceContext";
+import { DrawingInterfaceListContext } from "../../interfaces/drawing/react/DrawingInterfaceListContext";
 import { ModalWindow } from "../util/ModalWindow";
 import "./CustomWindow.css";
 
@@ -45,7 +45,7 @@ export function NewFileWindow(props: {
 						className="icon-button"
 						onClick={() => {
 							// create new drawing interface
-							const newInterface = new DrawingInterface(
+							const newInterface = DrawingInterface.create(
 								Number(width),
 								Number(height),
 								1,

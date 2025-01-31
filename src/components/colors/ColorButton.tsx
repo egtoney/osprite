@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Color } from "../../interfaces/drawing/Color";
+import { Color } from "../../interfaces/drawing/color/Color";
 import { Checkerboard } from "./Checkerboard";
 import { ColorPicker } from "./ColorPicker";
 

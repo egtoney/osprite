@@ -3,7 +3,7 @@ import { useAsyncMemo } from "../../hooks/useAsyncMemo";
 import { FileInterface } from "../../interfaces/drawing/FileInterface";
 import { ModalWindow } from "../util/ModalWindow";
 import "./CustomWindow.css";
-import { DrawingInterfaceContext } from "../../interfaces/drawing/DrawingInterfaceContext";
+import { DrawingInterfaceContext } from "../../interfaces/drawing/react/DrawingInterfaceContext";
 
 export function SaveFileWindow(props: {
 	open: boolean;

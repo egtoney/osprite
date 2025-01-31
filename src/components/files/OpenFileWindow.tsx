@@ -1,13 +1,13 @@
 import { useContext, useState } from "react";
 import { useAsyncMemo } from "../../hooks/useAsyncMemo";
-import { DrawingInterfaceListContext } from "../../interfaces/drawing/DrawingInterfaceListContext";
+import { DrawingInterfaceListContext } from "../../interfaces/drawing/react/DrawingInterfaceListContext";
 import { FileInterface } from "../../interfaces/drawing/FileInterface";
 import { CustomTable } from "../util/CustomTable";
 import { ModalWindow } from "../util/ModalWindow";
 import "./CustomWindow.css";
 import { BootstrapIconFileEarmarkIcon } from "../icons/BootstrapIconFileEarmarkIcon";
 import { DrawingInterface } from "../../interfaces/drawing/DrawingInterface";
-import { DrawingInterfaceContext } from "../../interfaces/drawing/DrawingInterfaceContext";
+import { DrawingInterfaceContext } from "../../interfaces/drawing/react/DrawingInterfaceContext";
 
 export function OpenFileWindow(props: {
 	open: boolean;
@@ -50,7 +50,7 @@ export function OpenFileWindow(props: {
 
 									if (existingInterface === undefined) {
 										// add interface if it is not already in the list
-										const obj = new DrawingInterface(1, 1, 1);
+										const obj = DrawingInterface.create(1, 1, 1);
 										Object.assign(obj, file);
 										setDrawingInterfaces([...drawingInterfaces, obj]);
 									} else {

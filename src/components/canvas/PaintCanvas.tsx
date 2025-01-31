@@ -1,12 +1,15 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useEventListener } from "../../hooks/useEventListener";
-import { Brush } from "../../interfaces/drawing/Brush";
+import { Brush } from "../../interfaces/drawing/brush/Brush";
 import { ClipboardInterface } from "../../interfaces/drawing/ClipboardInterface";
-import { SelectInterface } from "../../interfaces/drawing/DrawingInterface";
-import { DrawingInterfaceContext } from "../../interfaces/drawing/DrawingInterfaceContext";
+import { DrawingInterfaceContext } from "../../interfaces/drawing/react/DrawingInterfaceContext";
 import { RenderInterface } from "../../interfaces/drawing/RenderInterface";
-import { Vec2 } from "../../interfaces/drawing/Vec2";
+import { Vec2 } from "../../interfaces/Vec2";
 import "./PaintCanvas.css";
+import { DisplayInterface } from "../../interfaces/drawing/DisplayInterface";
+import { DrawingHistory } from "../../interfaces/drawing/DrawingHistory";
+import { SelectionInterface } from "../../interfaces/drawing/SelectionInterface";
+import { CursorInterface } from "../../interfaces/drawing/CursorInterface";
 
 export function PaintCanvas() {
 	const wrapperRef = useRef<HTMLDivElement>(null);
@@ -46,7 +49,8 @@ export function PaintCanvas() {
 				setCanvasWidth(wrapper.clientWidth);
 				setCanvasHeight(wrapper.clientHeight);
 
-				drawingInterface.setDisplaySize(
+				DisplayInterface.setDisplaySize(
+					drawingInterface,
 					bounding.left,
 					bounding.top,
 					wrapper.clientWidth,
@@ -75,15 +79,15 @@ export function PaintCanvas() {
 			if ((e.ctrlKey || e.metaKey) && e.key === "z") {
 				e.preventDefault();
 				if (e.shiftKey) {
-					drawingInterface.redo();
+					DrawingHistory.redo(drawingInterface);
 				} else {
-					drawingInterface.undo();
+					DrawingHistory.undo(drawingInterface);
 				}
 			}
 
 			if ((e.ctrlKey || e.metaKey) && e.key === "y") {
 				e.preventDefault();
-				drawingInterface.redo();
+				DrawingHistory.redo(drawingInterface);
 			}
 		};
 
@@ -102,11 +106,11 @@ export function PaintCanvas() {
 
 			if (decoded) {
 				// clear current selection
-				SelectInterface.clearSelection(drawingInterface);
+				SelectionInterface.clearSelection(drawingInterface);
 
 				// start a new selection with the pasted image
-				drawingInterface.selection = SelectInterface.fromImage(decoded);
-				drawingInterface.queueRender();
+				drawingInterface.selection = SelectionInterface.fromImage(decoded);
+				RenderInterface.queueRender(drawingInterface);
 			}
 		};
 		document.addEventListener("paste", listener);
@@ -168,7 +172,8 @@ export function PaintCanvas() {
 			e.preventDefault();
 
 			if (isZooming === false && e.touches.length === 1) {
-				drawingInterface.handleCursorMove(
+				CursorInterface.handleCursorMove(
+					drawingInterface,
 					e.touches[0].clientX,
 					e.touches[0].clientY,
 				);
@@ -204,7 +209,7 @@ export function PaintCanvas() {
 		wrapperRef,
 		"mousemove",
 		(e) => {
-			drawingInterface.handleCursorMove(e.clientX, e.clientY);
+			CursorInterface.handleCursorMove(drawingInterface, e.clientX, e.clientY);
 		},
 		[drawingInterface],
 	);
@@ -218,7 +223,8 @@ export function PaintCanvas() {
 			if (e.touches.length === 1) {
 				// handle touch
 				console.log("touchstart");
-				drawingInterface.handleCursorStart(
+				CursorInterface.handleCursorStart(
+					drawingInterface,
 					e.touches[0].clientX,
 					e.touches[0].clientY,
 				);
@@ -265,7 +271,12 @@ export function PaintCanvas() {
 		wrapperRef,
 		"mousedown",
 		(e) => {
-			drawingInterface.handleCursorStart(e.clientX, e.clientY, e.button);
+			CursorInterface.handleCursorStart(
+				drawingInterface,
+				e.clientX,
+				e.clientY,
+				e.button,
+			);
 		},
 		[drawingInterface],
 	);
@@ -284,7 +295,7 @@ export function PaintCanvas() {
 			}
 
 			if (isZooming === false) {
-				drawingInterface.handleCursorEnd();
+				CursorInterface.handleCursorEnd(drawingInterface);
 			}
 		},
 		[drawingInterface, isZooming],
@@ -294,7 +305,7 @@ export function PaintCanvas() {
 		wrapperRef,
 		"mouseup",
 		() => {
-			drawingInterface.handleCursorEnd();
+			CursorInterface.handleCursorEnd(drawingInterface);
 		},
 		[drawingInterface],
 	);
@@ -314,7 +325,7 @@ export function PaintCanvas() {
 			const delta =
 				Math.round(drawingInterface.wheel) - drawingInterface.display.zoom;
 			if (delta !== 0) {
-				drawingInterface.updateZoom(delta);
+				DisplayInterface.updateZoom(drawingInterface, delta);
 			}
 		},
 		[drawingInterface],
@@ -324,7 +335,7 @@ export function PaintCanvas() {
 		wrapperRef,
 		"mouseleave",
 		() => {
-			drawingInterface.handleCursorEnd();
+			CursorInterface.handleCursorEnd(drawingInterface);
 		},
 		[drawingInterface],
 	);
@@ -357,7 +368,7 @@ export function PaintCanvas() {
 					: Math.max(1, Math.min(startZoom + diffZoom, 64));
 			const delta = newZoom - drawingInterface.display.zoom;
 
-			drawingInterface.updateZoom(delta, ref);
+			DisplayInterface.updateZoom(drawingInterface, delta, ref);
 		}
 
 		// try pan
@@ -365,7 +376,7 @@ export function PaintCanvas() {
 		drawingInterface.display.dx = startTranslation.x + diff.x;
 		drawingInterface.display.dy = startTranslation.y + diff.y;
 
-		drawingInterface.queueRender();
+		RenderInterface.queueRender(drawingInterface);
 	}, [
 		drawingInterface,
 		startZoom,
@@ -401,7 +412,7 @@ export function PaintCanvas() {
 	 */
 	useEffect(() => {
 		if (drawingInterface) {
-			drawingInterface.queueRender();
+			RenderInterface.queueRender(drawingInterface);
 		}
 	}, [drawingInterface]);
 

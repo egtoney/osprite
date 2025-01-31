@@ -1,12 +1,13 @@
 import { useContext } from "react";
-import { Brush } from "../../../interfaces/drawing/Brush";
-import { DrawingInterfaceContext } from "../../../interfaces/drawing/DrawingInterfaceContext";
+import { Brush } from "../../../interfaces/drawing/brush/Brush";
+import { DrawingInterfaceContext } from "../../../interfaces/drawing/react/DrawingInterfaceContext";
 import { BootstrapIconArrowsMove } from "../../icons/BootstrapIconArrowsMove";
 import { BootstrapIconEraser } from "../../icons/BootstrapIconEraser";
 import { BootstrapIconEyedropper } from "../../icons/BootstrapIconEyedropper";
 import { BootstrapIconPencil } from "../../icons/BootstrapIconPencil";
 import { BootstrapIconPlusSquareDotted } from "../../icons/BootstrapIconPlusSquareDotted";
 import { BootstrapIconSearch } from "../../icons/BootstrapIconSearch";
+import { RenderInterface } from "../../../interfaces/drawing/RenderInterface";
 
 export function BrushControls() {
 	const [drawingInterface] = useContext(DrawingInterfaceContext);
@@ -33,7 +34,7 @@ export function BrushControls() {
 				className="icon-button icon-button-sm"
 				onClick={() => {
 					drawingInterface.brush.selected = Brush.SELECT;
-					drawingInterface.queueRender();
+					RenderInterface.queueRender(drawingInterface);
 				}}
 			>
 				<BootstrapIconPlusSquareDotted />
@@ -43,7 +44,7 @@ export function BrushControls() {
 				className="icon-button icon-button-sm"
 				onClick={() => {
 					drawingInterface.brush.selected = Brush.PENCIL;
-					drawingInterface.queueRender();
+					RenderInterface.queueRender(drawingInterface);
 				}}
 			>
 				<BootstrapIconPencil />
@@ -53,7 +54,7 @@ export function BrushControls() {
 				className="icon-button icon-button-sm"
 				onClick={() => {
 					drawingInterface.brush.selected = Brush.ERASER;
-					drawingInterface.queueRender();
+					RenderInterface.queueRender(drawingInterface);
 				}}
 			>
 				<BootstrapIconEraser />
@@ -63,7 +64,7 @@ export function BrushControls() {
 				className="icon-button icon-button-sm"
 				onClick={() => {
 					drawingInterface.brush.selected = Brush.DROPPER;
-					drawingInterface.queueRender();
+					RenderInterface.queueRender(drawingInterface);
 				}}
 			>
 				<BootstrapIconEyedropper />

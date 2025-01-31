@@ -1,6 +1,6 @@
 import { useContext } from "react";
-import { DrawingInterfaceListContext } from "../interfaces/drawing/DrawingInterfaceListContext";
-import { DrawingInterfaceContext } from "../interfaces/drawing/DrawingInterfaceContext";
+import { DrawingInterfaceListContext } from "../interfaces/drawing/react/DrawingInterfaceListContext";
+import { DrawingInterfaceContext } from "../interfaces/drawing/react/DrawingInterfaceContext";
 
 export function Tab(props: { focused: boolean; name: string; index: number }) {
 	const [interfaces, setInterfaces] = useContext(DrawingInterfaceListContext);

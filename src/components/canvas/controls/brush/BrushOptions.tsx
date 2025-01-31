@@ -1,6 +1,6 @@
 import { useContext, useMemo } from "react";
-import { Brush } from "../../../../interfaces/drawing/Brush";
-import { DrawingInterfaceContext } from "../../../../interfaces/drawing/DrawingInterfaceContext";
+import { Brush } from "../../../../interfaces/drawing/brush/Brush";
+import { DrawingInterfaceContext } from "../../../../interfaces/drawing/react/DrawingInterfaceContext";
 import { BootstrapIconArrowClockwise } from "../../../icons/BootstrapIconArrowClockwise";
 import { BootstrapIconArrowCounterclockwise } from "../../../icons/BootstrapIconArrowCounterclockwise";
 import { BootstrapIconFullscreen } from "../../../icons/BootstrapIconFullscreen";
@@ -8,6 +8,7 @@ import { DropperOptions } from "./options/DropperOptions";
 import { EraserOptions } from "./options/EraserOptions";
 import { PencilOptions } from "./options/PencilOptions";
 import { SelectOptions } from "./options/SelectOptions";
+import { DrawingHistory } from "../../../../interfaces/drawing/DrawingHistory";
 
 export function BrushOptions() {
 	const [drawingInterface] = useContext(DrawingInterfaceContext);
@@ -54,9 +55,9 @@ export function BrushOptions() {
 			<button
 				className="icon-button icon-button-sm"
 				onClick={() => {
-					drawingInterface.undo();
+					DrawingHistory.undo(drawingInterface);
 				}}
-				disabled={!drawingInterface.canUndo()}
+				disabled={!DrawingHistory.canUndo(drawingInterface)}
 			>
 				<BootstrapIconArrowCounterclockwise />
 			</button>
@@ -64,9 +65,9 @@ export function BrushOptions() {
 			<button
 				className="icon-button icon-button-sm icon-button-space-right"
 				onClick={() => {
-					drawingInterface.redo();
+					DrawingHistory.redo(drawingInterface);
 				}}
-				disabled={!drawingInterface.canRedo()}
+				disabled={!DrawingHistory.canRedo(drawingInterface)}
 			>
 				<BootstrapIconArrowClockwise />
 			</button>

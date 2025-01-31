@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { DrawingInterfaceContext } from "../../../interfaces/drawing/DrawingInterfaceContext";
+import { DrawingInterfaceContext } from "../../../interfaces/drawing/react/DrawingInterfaceContext";
 import { FileInterface } from "../../../interfaces/drawing/FileInterface";
 import { NewFileWindow } from "../../files/NewFileWindow";
 import { SaveFileWindow } from "../../files/SaveFileWindow";

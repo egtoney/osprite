@@ -5,10 +5,11 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import { Loading } from "../../components/Loading";
-import { DrawingInterface } from "./DrawingInterface";
+import { Loading } from "../../../components/Loading";
+import { DisplayInterface } from "../DisplayInterface";
+import { DrawingInterface } from "../DrawingInterface";
 import { DrawingInterfaceProvider } from "./DrawingInterfaceContext";
-import { FileInterface } from "./FileInterface";
+import { FileInterface } from "../FileInterface";
 
 export const DrawingInterfaceListContext = createContext<
 	[DrawingInterface[], (index: DrawingInterface[]) => void]
@@ -36,7 +37,8 @@ export const DrawingInterfaceListProvider = (
 		if (interfaces) {
 			// update interfaces with new react hooks
 			for (const c of interfaces) {
-				c.setReactRenderHook(
+				DisplayInterface.setReactRenderHook(
+					c,
 					() => FileInterface.saveContext(interfaces),
 					() => setInterfaces([...interfaces]),
 				);

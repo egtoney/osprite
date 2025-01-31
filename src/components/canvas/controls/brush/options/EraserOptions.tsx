@@ -1,5 +1,6 @@
 import { useContext } from "react";
-import { DrawingInterfaceContext } from "../../../../../interfaces/drawing/DrawingInterfaceContext";
+import { DrawingInterfaceContext } from "../../../../../interfaces/drawing/react/DrawingInterfaceContext";
+import { RenderInterface } from "../../../../../interfaces/drawing/RenderInterface";
 
 export function EraserOptions() {
 	const [drawingInterface] = useContext(DrawingInterfaceContext);
@@ -24,7 +25,7 @@ export function EraserOptions() {
 					onChange={(e) => {
 						const parsed = Math.max(1, Number(e.target.value));
 						drawingInterface.brush.pencil.size = parsed;
-						drawingInterface.queueRender();
+						RenderInterface.queueRender(drawingInterface);
 					}}
 				/>
 				px

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { RGBColor, Color } from "../../interfaces/drawing/Color";
+import { RGBColor, Color } from "../../interfaces/drawing/color/Color";
 import { Checkerboard } from "./Checkerboard";
 
 const DEAD_ZONE = -2;

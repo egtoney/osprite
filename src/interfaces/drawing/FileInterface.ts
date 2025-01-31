@@ -9,6 +9,7 @@ export namespace FileInterface {
 
 	export async function clearData() {
 		await db.destroy();
+		window.location.reload();
 	}
 
 	function cleanContext(context: DrawingInterface): Partial<DrawingInterface> {
@@ -74,12 +75,12 @@ export namespace FileInterface {
 			const stripped = (record as any).context as DrawingInterface[];
 
 			return stripped.map((plainObj) => {
-				const classObj = new DrawingInterface(1, 1, 1);
+				const classObj = DrawingInterface.create(1, 1, 1);
 				Object.assign(classObj, plainObj);
 				return classObj;
 			});
 		} catch {
-			return [new DrawingInterface(16 * 8, 16 * 8, 4)];
+			return [DrawingInterface.create(16 * 8, 16 * 8, 4)];
 		}
 	}
 

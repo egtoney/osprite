@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { DrawingInterfaceContext } from "../interfaces/drawing/DrawingInterfaceContext";
+import { DrawingInterfaceContext } from "../interfaces/drawing/react/DrawingInterfaceContext";
 
 export function Footer() {
 	const [drawingInterface] = useContext(DrawingInterfaceContext);

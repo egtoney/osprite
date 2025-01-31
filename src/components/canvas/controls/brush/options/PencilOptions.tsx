@@ -1,9 +1,10 @@
 import { useContext } from "react";
-import { PencilShape } from "../../../../../interfaces/drawing/DrawingInterface";
+import { DrawingInterfaceContext } from "../../../../../interfaces/drawing/react/DrawingInterfaceContext";
+import { RenderInterface } from "../../../../../interfaces/drawing/RenderInterface";
 import { BootstrapIconCircleFill } from "../../../../icons/BootstrapIconCircleFill";
-import { DrawingInterfaceContext } from "../../../../../interfaces/drawing/DrawingInterfaceContext";
 import { BootstrapIconSquareFill } from "../../../../icons/BootstrapIconSquareFill";
 import { CustomToggle } from "../../../../util/CustomToggle";
+import { BrushShape } from "../../../../../interfaces/drawing/brush/BrushShape";
 
 export function PencilOptions() {
 	const [drawingInterface] = useContext(DrawingInterfaceContext);
@@ -14,14 +15,14 @@ export function PencilOptions() {
 				className="icon-button icon-button-sm icon-button-space-right"
 				onClick={() => {
 					drawingInterface.brush.pencil.shape =
-						drawingInterface.brush.pencil.shape === PencilShape.CIRCLE
-							? PencilShape.SQUARE
-							: PencilShape.CIRCLE;
-					drawingInterface.queueRender();
+						drawingInterface.brush.pencil.shape === BrushShape.CIRCLE
+							? BrushShape.SQUARE
+							: BrushShape.CIRCLE;
+					RenderInterface.queueRender(drawingInterface);
 				}}
 				disabled
 			>
-				{drawingInterface.brush.pencil.shape === PencilShape.CIRCLE ? (
+				{drawingInterface.brush.pencil.shape === BrushShape.CIRCLE ? (
 					<BootstrapIconCircleFill size={10} />
 				) : (
 					<BootstrapIconSquareFill size={10} />
@@ -45,7 +46,7 @@ export function PencilOptions() {
 					onChange={(e) => {
 						const parsed = Math.max(1, Number(e.target.value));
 						drawingInterface.brush.pencil.size = parsed;
-						drawingInterface.queueRender();
+						RenderInterface.queueRender(drawingInterface);
 					}}
 				/>
 				px
@@ -56,7 +57,7 @@ export function PencilOptions() {
 				onChange={() => {
 					drawingInterface.brush.pencil.pixelPerfect =
 						!drawingInterface.brush.pencil.pixelPerfect;
-					drawingInterface.queueRender();
+					RenderInterface.queueRender(drawingInterface);
 				}}
 			/>
 		</>

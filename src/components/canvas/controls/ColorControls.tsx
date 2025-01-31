@@ -1,10 +1,11 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import "./ColorControls.css";
 import { useToggle } from "../../../hooks/useToggle";
 import { ArrayExt } from "../../../interfaces/Array";
-import { Color } from "../../../interfaces/drawing/Color";
+import { Color } from "../../../interfaces/drawing/color/Color";
+import { ColorInterface } from "../../../interfaces/drawing/color/ColorInterface";
 import { DrawingInterface } from "../../../interfaces/drawing/DrawingInterface";
-import { DrawingInterfaceContext } from "../../../interfaces/drawing/DrawingInterfaceContext";
+import { DrawingInterfaceContext } from "../../../interfaces/drawing/react/DrawingInterfaceContext";
+import { RenderInterface } from "../../../interfaces/drawing/RenderInterface";
 import { Checkerboard } from "../../colors/Checkerboard";
 import { ColorButton } from "../../colors/ColorButton";
 import { BootstrapIconFolder } from "../../icons/BootstrapIconFolder";
@@ -12,6 +13,7 @@ import { BootstrapIconGripVertical } from "../../icons/BootstrapIconGripVertical
 import { BootstrapIconList } from "../../icons/BootstrapIconList";
 import { BootstrapIconLock } from "../../icons/BootstrapIconLock";
 import { BootstrapIconUnlock } from "../../icons/BootstrapIconUnlock";
+import "./ColorControls.css";
 
 const DEFAULT_PALLET = [
 	Color.CLEAR,
@@ -53,7 +55,7 @@ export function ColorPallet(props: {
 		}
 
 		const palletColor = pallet[selected] ?? Color.BLACK;
-		const currentColor = props.drawingInterface.currentColor();
+		const currentColor = ColorInterface.currentColor(props.drawingInterface);
 
 		if (!Color.equal(palletColor, currentColor)) {
 			pallet[selected] = { ...currentColor };
@@ -161,7 +163,7 @@ export function ColorPallet(props: {
 						}}
 						onClick={() => {
 							props.drawingInterface.colors.primary = { ...color };
-							props.drawingInterface.queueRender();
+							RenderInterface.queueRender(props.drawingInterface);
 							setSelected(i);
 						}}
 						onTouchStart={() => {
@@ -171,12 +173,12 @@ export function ColorPallet(props: {
 							switch (e.button) {
 								case 0:
 									props.drawingInterface.colors.primary = { ...color };
-									props.drawingInterface.queueRender();
+									RenderInterface.queueRender(props.drawingInterface);
 									setSelected(i);
 									break;
 								case 2:
 									props.drawingInterface.colors.secondary = { ...color };
-									props.drawingInterface.queueRender();
+									RenderInterface.queueRender(props.drawingInterface);
 									setSelected(i);
 									break;
 								default:
@@ -266,14 +268,14 @@ export function ColorControls() {
 				color={drawingInterface.colors.primary}
 				onChange={(c) => {
 					drawingInterface.colors.primary = c;
-					drawingInterface.queueRender();
+					RenderInterface.queueRender(drawingInterface);
 				}}
 			/>
 			<ColorButton
 				color={drawingInterface.colors.secondary}
 				onChange={(c) => {
 					drawingInterface.colors.secondary = c;
-					drawingInterface.queueRender();
+					RenderInterface.queueRender(drawingInterface);
 				}}
 			/>
 		</div>

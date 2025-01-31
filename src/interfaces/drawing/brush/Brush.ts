@@ -1,9 +1,9 @@
-import { BootstrapIconArrowsMove } from "../../components/icons/BootstrapIconArrowsMove";
-import { BootstrapIconEraser } from "../../components/icons/BootstrapIconEraser";
-import { BootstrapIconEyedropper } from "../../components/icons/BootstrapIconEyedropper";
-import { BootstrapIconPencil } from "../../components/icons/BootstrapIconPencil";
-import { BootstrapIconPlusSquareDotted } from "../../components/icons/BootstrapIconPlusSquareDotted";
-import { BootstrapIconSearch } from "../../components/icons/BootstrapIconSearch";
+import { BootstrapIconArrowsMove } from "../../../components/icons/BootstrapIconArrowsMove";
+import { BootstrapIconEraser } from "../../../components/icons/BootstrapIconEraser";
+import { BootstrapIconEyedropper } from "../../../components/icons/BootstrapIconEyedropper";
+import { BootstrapIconPencil } from "../../../components/icons/BootstrapIconPencil";
+import { BootstrapIconPlusSquareDotted } from "../../../components/icons/BootstrapIconPlusSquareDotted";
+import { BootstrapIconSearch } from "../../../components/icons/BootstrapIconSearch";
 
 /* eslint-disable @typescript-eslint/no-namespace */
 export enum Brush {

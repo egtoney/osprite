@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { AABB } from "./AABB";
-import { Vec2 } from "./drawing/Vec2";
+import { Vec2 } from "./Vec2";
 
 export type Polygon = Vec2[];
 

@@ -5,10 +5,10 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import { DrawingInterface } from "./DrawingInterface";
+import { DrawingInterface } from "../DrawingInterface";
 import { DrawingInterfaceListContext } from "./DrawingInterfaceListContext";
 
-export const DEFAULT_CONTEXT: DrawingInterface = new DrawingInterface(
+export const DEFAULT_CONTEXT: DrawingInterface = DrawingInterface.create(
 	32,
 	32,
 	1,

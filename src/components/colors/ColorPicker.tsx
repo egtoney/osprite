@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Color, RGBColor } from "../../interfaces/drawing/Color";
+import { Color, RGBColor } from "../../interfaces/drawing/color/Color";
 import { ColorSlider } from "./ColorSlider";
 
 function RGBOptions(props: { color: Color; onChange: (color: Color) => void }) {
