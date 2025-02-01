@@ -13,7 +13,8 @@ import { CursorInterface } from "../../interfaces/drawing/CursorInterface";
 
 export function PaintCanvas() {
 	const wrapperRef = useRef<HTMLDivElement>(null);
-	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
+	const interfaceCanvasRef = useRef<HTMLCanvasElement>(null);
 	const [canvasWidth, setCanvasWidth] = useState(320);
 	const [canvasHeight, setCanvasHeight] = useState(180);
 	const [drawingInterface] = useContext(DrawingInterfaceContext);
@@ -42,9 +43,13 @@ export function PaintCanvas() {
 	 */
 	useEffect(() => {
 		function handleResize() {
-			if (wrapperRef.current && canvasRef.current) {
+			if (
+				wrapperRef.current &&
+				drawingCanvasRef.current &&
+				interfaceCanvasRef.current
+			) {
 				const wrapper = wrapperRef.current;
-				const bounding = canvasRef.current.getBoundingClientRect();
+				const bounding = drawingCanvasRef.current.getBoundingClientRect();
 
 				setCanvasWidth(wrapper.clientWidth);
 				setCanvasHeight(wrapper.clientHeight);
@@ -395,7 +400,11 @@ export function PaintCanvas() {
 		function render() {
 			handle = requestAnimationFrame(render);
 
-			RenderInterface.render(drawingInterface, canvasRef);
+			RenderInterface.render(
+				drawingInterface,
+				drawingCanvasRef,
+				interfaceCanvasRef,
+			);
 		}
 
 		handle = requestAnimationFrame(render);
@@ -419,7 +428,16 @@ export function PaintCanvas() {
 	return (
 		<div ref={wrapperRef} className="wrapper-outer" style={{ zIndex: 50 }}>
 			<canvas
-				ref={canvasRef}
+				ref={drawingCanvasRef}
+				width={canvasWidth}
+				height={canvasHeight}
+				style={{
+					width: canvasWidth,
+					height: canvasHeight,
+				}}
+			/>
+			<canvas
+				ref={interfaceCanvasRef}
 				width={canvasWidth}
 				height={canvasHeight}
 				style={{

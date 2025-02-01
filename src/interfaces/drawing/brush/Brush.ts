@@ -18,6 +18,9 @@ export enum Brush {
 export namespace Brush {
 	export function iconFor(brush: Brush) {
 		switch (brush) {
+			default:
+				console.warn("got a invalid brush", brush);
+			// eslint-disable-next-line no-fallthrough
 			case Brush.SELECT:
 				return BootstrapIconPlusSquareDotted;
 			case Brush.PENCIL:

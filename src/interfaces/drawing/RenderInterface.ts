@@ -6,11 +6,11 @@ import { Color } from "./color/Color";
 import { ColorInterface } from "./color/ColorInterface";
 import { CoordinateInterface } from "./CoordinateInterface";
 import { DrawingInterface } from "./DrawingInterface";
-import { ImageInterfaceSlice } from "./ImageInterface";
+import { ImageInterfaceSlice, ImageLayer } from "./ImageInterface";
 
 export namespace RenderInterface {
-	const inMemCanvas1 = document.createElement("canvas");
-	const inMemCanvas2 = document.createElement("canvas");
+	const backgroundCanvas = document.createElement("canvas");
+	const foregroundCanvas = document.createElement("canvas");
 	const inMemSelectionCanvas = document.createElement("canvas");
 
 	/**
@@ -31,49 +31,47 @@ export namespace RenderInterface {
 		return canvas;
 	}
 
-	export function render(
-		instance: DrawingInterface,
-		canvasRef: React.RefObject<HTMLCanvasElement>,
-	) {
-		// pull and check canvas
-		const canvas = canvasRef.current;
-		if (canvas === null) {
-			return;
-		}
-
-		// pull and check 2d graphics context
-		const context = canvas.getContext("2d");
-		if (context === null) {
-			return;
-		}
-
-		// only render when we need to
-		if (instance.shouldRender === false) {
-			return;
-		}
-		instance.shouldRender = false;
-
-		// clear screen
-		const bounding = canvas.getBoundingClientRect();
-		context.restore();
-		context.clearRect(0, 0, bounding.width, bounding.height);
-		context.imageSmoothingEnabled = false;
-
-		// translate relative to display x, y
-		context.save();
-		const tx = Math.round(
-			(instance.display.width - instance.display.zoom * instance.image.width) /
-				2 +
-				instance.display.dx,
+	export function shouldRenderBackground(instance: DrawingInterface) {
+		return (
+			instance._display === undefined ||
+			instance._display.width !== instance.display.width ||
+			instance._display.height !== instance.display.height
 		);
-		const ty = Math.round(
-			(instance.display.height -
-				instance.display.zoom * instance.image.height) /
-				2 +
-				instance.display.dy,
-		);
-		context.translate(tx, ty);
+	}
 
+	export function shouldRenderForeground(instance: DrawingInterface) {
+		// TODO: eventually detect when image is resized as well
+		for (const layer of instance.image.layers) {
+			if (shouldRenderLayer(layer)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	export function shouldRenderLayer(layer: ImageLayer) {
+		// render if there isn't a canvas already
+		return (
+			layer._canvas === undefined ||
+			// render if rev numbers don't match
+			layer.rev !== layer._rev
+		);
+	}
+
+	export function shouldRenderDisplay(instance: DrawingInterface) {
+		return (
+			instance._display === undefined ||
+			instance._display.dx !== instance.display.dx ||
+			instance._display.dy !== instance.display.dy ||
+			instance._display.left !== instance.display.left ||
+			instance._display.top !== instance.display.top ||
+			instance._display.width !== instance.display.width ||
+			instance._display.height !== instance.display.height ||
+			instance._display.zoom !== instance.display.zoom
+		);
+	}
+
+	function tryBuildBackgroundImage(instance: DrawingInterface) {
 		if (!instance.image.bgData) {
 			instance.image.bgData = new Uint8ClampedArray(
 				instance.image.width * instance.image.height * 4,
@@ -96,52 +94,146 @@ export namespace RenderInterface {
 				}
 			}
 		}
+	}
 
-		// render canvas background
-		renderToCanvas(inMemCanvas1, {
-			width: instance.image.width,
-			height: instance.image.height,
-			data: instance.image.bgData,
-		});
+	export function render(
+		instance: DrawingInterface,
+		drawingCanvasRef: React.RefObject<HTMLCanvasElement>,
+		interfaceCanvasRef: React.RefObject<HTMLCanvasElement>,
+	) {
+		// pull and check canvas
+		const drawingCanvas = drawingCanvasRef.current;
+		if (drawingCanvas === null) {
+			return;
+		}
 
-		// render pixels (layer 0)
-		renderToCanvas(inMemCanvas2, {
-			width: instance.image.width,
-			height: instance.image.height,
-			data: instance.image.layers[0],
-		});
+		// pull and check 2d graphics context
+		const drawingContext = drawingCanvas.getContext("2d");
+		if (drawingContext === null) {
+			return;
+		}
 
-		context.setTransform(
-			instance.display.zoom,
-			0,
-			0,
-			instance.display.zoom,
-			tx,
-			ty,
+		// pull and check canvas
+		const interfaceCanvas = interfaceCanvasRef.current;
+		if (interfaceCanvas === null) {
+			return;
+		}
+
+		// pull and check 2d graphics context
+		const interfaceContext = interfaceCanvas.getContext("2d");
+		if (interfaceContext === null) {
+			return;
+		}
+
+		// only render when we need to
+		if (instance.shouldRender === false) {
+			return;
+		}
+		instance.shouldRender = false;
+
+		tryBuildBackgroundImage(instance);
+
+		const tx = Math.round(
+			(instance.display.width - instance.display.zoom * instance.image.width) /
+				2 +
+				instance.display.dx,
 		);
-		context.drawImage(inMemCanvas1, 0, 0);
-		context.drawImage(inMemCanvas2, 0, 0);
-		context.setTransform(1, 0, 0, 1, tx, ty);
+		const ty = Math.round(
+			(instance.display.height -
+				instance.display.zoom * instance.image.height) /
+				2 +
+				instance.display.dy,
+		);
+
+		if (
+			shouldRenderBackground(instance) ||
+			shouldRenderForeground(instance) ||
+			shouldRenderDisplay(instance)
+		) {
+			// clear screen
+			drawingContext.restore();
+			drawingContext.clearRect(-10000, -10000, 20000, 20000);
+			drawingContext.imageSmoothingEnabled = false;
+
+			// setup transforms for foreground and background renders
+			drawingContext.setTransform(
+				instance.display.zoom,
+				0,
+				0,
+				instance.display.zoom,
+				tx,
+				ty,
+			);
+
+			// render canvas background
+			if (shouldRenderBackground(instance)) {
+				renderToCanvas(backgroundCanvas, {
+					width: instance.image.width,
+					height: instance.image.height,
+					data: instance.image.bgData,
+				});
+			}
+
+			// render foreground only if needed
+			if (shouldRenderForeground(instance)) {
+				const foregroundContext = foregroundCanvas.getContext("2d")!;
+				foregroundContext.clearRect(
+					0,
+					0,
+					instance.image.width,
+					instance.image.height,
+				);
+
+				// render layers to foreground
+				for (const layer of instance.image.layers) {
+					// render layer to in memory canvas if needed
+					if (shouldRenderLayer(layer)) {
+						layer._canvas ??= document.createElement("canvas");
+						layer._rev = layer.rev;
+
+						renderToCanvas(layer._canvas, {
+							width: instance.image.width,
+							height: instance.image.height,
+							data: layer.data,
+						});
+					}
+
+					// render layer to in memory foreground canvas
+					foregroundContext.drawImage(layer._canvas!, 0, 0);
+				}
+			}
+
+			drawingContext.drawImage(backgroundCanvas, 0, 0);
+			drawingContext.drawImage(foregroundCanvas, 0, 0);
+		}
+
+		interfaceContext.restore();
+		interfaceContext.clearRect(-10000, -10000, 20000, 20000);
+		interfaceContext.imageSmoothingEnabled = false;
+		interfaceContext.setTransform(1, 0, 0, 1, tx, ty);
 
 		// render selection
-		renderSelection(instance, context);
-		renderPartialSelection(instance, context);
+		renderSelection(instance, interfaceContext);
+		renderPartialSelection(instance, interfaceContext);
 
 		switch (instance.brush.selected) {
 			case Brush.PENCIL:
-				renderCursorPencil(instance, context);
+				renderCursorPencil(instance, interfaceContext);
 				break;
 			case Brush.SELECT:
-				renderCursorSelect(instance, context);
+				renderCursorSelect(instance, interfaceContext);
 				break;
 			case Brush.ERASER:
-				renderCursorEraser(instance, context);
+				renderCursorEraser(instance, interfaceContext);
 				break;
 			case Brush.DROPPER:
 			default:
-				renderCursorEyedropper(instance, context);
+				renderCursorEyedropper(instance, interfaceContext);
 				break;
 		}
+
+		// update rendered display info
+		instance._display = { ...instance.display };
 	}
 
 	export function queueRender(instance: DrawingInterface) {

@@ -117,20 +117,9 @@ export namespace Color {
 	}
 
 	/**
-	 * Blends the foreground color onto the background color.
-	 * - When fg alpha is 255 the foreground replaces the background
-	 * - When fg alpha is 0 the foreground erases the background
-	 * - Otherwise the foreground is blended with the background using alpha compositing
+	 * Blends the foreground color onto the background color using normal alpha compositing
 	 */
 	export function blendNormal(bg: RGBColor, fg: RGBColor): RGBColor {
-		if (fg.a === 255) {
-			return fg;
-		}
-
-		if (fg.a === 0) {
-			return Color.CLEAR;
-		}
-
 		const fgA = fg.a / 255;
 		const bgA = bg.a / 255;
 		const alpha = fgA + bgA * (1 - fgA);
@@ -148,6 +137,24 @@ export namespace Color {
 			b: Math.round(blue),
 			a: Math.round(255 * alpha),
 		};
+	}
+
+	/**
+	 * Blends the foreground color onto the background color.
+	 * - When fg alpha is 255 the foreground replaces the background
+	 * - When fg alpha is 0 the foreground erases the background
+	 * - Otherwise the foreground is blended with the background using alpha compositing
+	 */
+	export function blendPencil(bg: RGBColor, fg: RGBColor): RGBColor {
+		if (fg.a === 255) {
+			return fg;
+		}
+
+		if (fg.a === 0) {
+			return Color.CLEAR;
+		}
+
+		return blendNormal(bg, fg);
 	}
 
 	/** */

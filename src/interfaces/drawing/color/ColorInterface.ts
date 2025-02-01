@@ -29,15 +29,15 @@ export namespace ColorInterface {
 		const index = 4 * (x + y * instance.image.width);
 
 		// check that index is valid
-		if (index < 0 || index > instance.image.layers[0].length - 4) {
+		if (index < 0 || index > instance.image.layers[0].data.length - 4) {
 			return null;
 		}
 
 		return {
-			r: instance.image.layers[0][index + 0],
-			g: instance.image.layers[0][index + 1],
-			b: instance.image.layers[0][index + 2],
-			a: instance.image.layers[0][index + 3],
+			r: instance.image.layers[0].data[index + 0],
+			g: instance.image.layers[0].data[index + 1],
+			b: instance.image.layers[0].data[index + 2],
+			a: instance.image.layers[0].data[index + 3],
 		};
 	}
 
@@ -59,16 +59,25 @@ export namespace ColorInterface {
 		color: RGBColor,
 		mode: BlendMode,
 	) {
-		// blend using alpha channel
-		if (mode === BlendMode.NORMAL) {
-			const baseColor: RGBColor = {
-				r: buffer[index],
-				g: buffer[index + 1],
-				b: buffer[index + 2],
-				a: buffer[index + 3],
-			};
+		const baseColor: RGBColor = {
+			r: buffer[index],
+			g: buffer[index + 1],
+			b: buffer[index + 2],
+			a: buffer[index + 3],
+		};
 
-			color = Color.blendNormal(baseColor, color);
+		// blend new and old colors using blend mode
+		switch (mode) {
+			case BlendMode.NORMAL:
+				color = Color.blendNormal(baseColor, color);
+				break;
+			case BlendMode.PENCIL:
+				color = Color.blendPencil(baseColor, color);
+				break;
+			default:
+			case BlendMode.REPLACE:
+				// do nothing
+				break;
 		}
 
 		buffer[index] = color.r;
@@ -97,6 +106,9 @@ export namespace ColorInterface {
 		);
 	}
 
+	/**
+	 *
+	 */
 	export function setColor(
 		instance: DrawingInterface,
 		x: number,
@@ -126,7 +138,7 @@ export namespace ColorInterface {
 		}
 
 		// grab current color
-		const oldColor: RGBColor = nreadColor(layer, index);
+		const oldColor: RGBColor = nreadColor(layer.data, index);
 
 		// do nothing if colors are equal and alpha is 255
 		if (Color.equal(oldColor, color) && color.a === 255) {
@@ -134,7 +146,10 @@ export namespace ColorInterface {
 		}
 
 		// update color
-		nwriteColor(layer, index, color, mode);
+		nwriteColor(layer.data, index, color, mode);
+
+		// flag that a render is needed
+		ImageInterface.flagLayerChange(layer);
 
 		// update history
 		if (historize) {

@@ -38,7 +38,7 @@ export namespace Pencil {
 				iy + point.y,
 				rgbColor,
 				true,
-				BlendMode.NORMAL,
+				BlendMode.PENCIL,
 			);
 		}
 	}

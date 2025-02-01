@@ -12,41 +12,46 @@ export namespace FileInterface {
 		window.location.reload();
 	}
 
-	function cleanContext(context: DrawingInterface): Partial<DrawingInterface> {
-		const clonedContext: Partial<DrawingInterface> = {};
+	function clean<T extends object>(context: T): Partial<T> {
+		const clone: Partial<T> = {};
+
+		const _clone = (key: keyof T) =>
+			(typeof context[key] === "object"
+				? clean(context[key] as object)
+				: context[key]) as T[keyof T];
+
+		if (context instanceof Uint8ClampedArray) {
+			return context;
+		}
+
+		if (Array.isArray(context)) {
+			return context.map((_, i) =>
+				_clone(i as keyof T),
+			) as unknown as Partial<T>;
+		}
 
 		// TODO: remove when DrawingInterface is no longer a class
-		for (const key of Object.keys(context) as (keyof DrawingInterface)[]) {
-			if (typeof context[key] !== "function") {
-				try {
-					// @ts-expect-error: some properties could be readonly
-					clonedContext[key] = context[key];
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				} catch (e) {
-					// do nothing
-				}
+		for (const key of Object.keys(context) as (keyof T)[]) {
+			// remove functions
+			if (typeof context[key] === "function") {
+				continue;
 			}
+
+			// remove properties prefixed with "_"
+			if (typeof key === "string" && key.startsWith("_")) {
+				continue;
+			}
+
+			clone[key] = _clone(key);
 		}
 
-		return clonedContext;
-	}
-
-	function cleanContexts(
-		contexts: DrawingInterface[],
-	): Partial<DrawingInterface>[] {
-		const clonedContexts: Partial<DrawingInterface>[] = [];
-
-		for (const context of contexts) {
-			clonedContexts.push(cleanContext(context));
-		}
-
-		return clonedContexts;
+		return clone;
 	}
 
 	// #region Context
 
 	export async function saveContext(contexts: DrawingInterface[]) {
-		const clonedContexts = cleanContexts(contexts);
+		const clonedContexts = clean(contexts);
 
 		let _rev: undefined | string = undefined;
 		try {
@@ -107,7 +112,7 @@ export namespace FileInterface {
 			_attachments: {
 				image: ImageInterface.encodeToBase64PNG(context.image),
 			},
-			...cleanContexts([context])[0],
+			...clean([context])[0],
 		};
 
 		console.log(doc);
@@ -147,10 +152,10 @@ export namespace FileInterface {
 			for (let y = 0; y < context.image.height; y++) {
 				const index = 4 * (x + y * context.image.width);
 
-				const r = context.image.layers[0][index + 0];
-				const g = context.image.layers[0][index + 1];
-				const b = context.image.layers[0][index + 2];
-				const a = context.image.layers[0][index + 3];
+				const r = context.image.layers[0].data[index + 0];
+				const g = context.image.layers[0].data[index + 1];
+				const b = context.image.layers[0].data[index + 2];
+				const a = context.image.layers[0].data[index + 3];
 
 				ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
 				ctx.fillRect(x, y, 1, 1);

@@ -8,6 +8,7 @@ import { ImageInterface } from "./ImageInterface";
 import { SaveInterface } from "./SaveInterface";
 import { SelectionInterface } from "./SelectionInterface";
 import { DrawingHistory } from "./DrawingHistory";
+import { BlendMode } from "./color/BlendMode";
 
 export interface DrawingInterface {
 	id: string;
@@ -35,6 +36,7 @@ export interface DrawingInterface {
 		};
 	};
 	display: DisplayInterface;
+	_display?: DisplayInterface;
 	save: SaveInterface;
 	image: ImageInterface;
 	colors: {
@@ -97,7 +99,16 @@ export namespace DrawingInterface {
 			undoHistory: [],
 			image: {
 				layer: 0,
-				layers: [new Uint8ClampedArray(4 * width * height)],
+				layers: [
+					{
+						data: new Uint8ClampedArray(4 * width * height),
+						name: "Layer 1",
+						blendingMode: BlendMode.NORMAL,
+						alpha: 255,
+						rev: 0,
+						_canvas: document.createElement("canvas"),
+					},
+				],
 				bgData: new Uint8ClampedArray(4 * width * height),
 				width: width,
 				height: height,

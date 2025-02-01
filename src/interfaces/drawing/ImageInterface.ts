@@ -16,9 +16,20 @@ export interface ImageInterfaceSlice {
 	height: number;
 }
 
+export interface ImageLayer {
+	data: Uint8ClampedArray;
+	name: string;
+	blendingMode: BlendMode;
+	/** 0-255 alpha value */
+	alpha: number;
+	rev: number;
+	_canvas?: HTMLCanvasElement;
+	_rev?: number;
+}
+
 export interface ImageInterface {
 	layer: number;
-	layers: Uint8ClampedArray[];
+	layers: ImageLayer[];
 	bgData: Uint8ClampedArray;
 	width: number;
 	height: number;
@@ -76,7 +87,7 @@ export namespace ImageInterface {
 		const canvas = RenderInterface.renderToCanvas(null, {
 			width: data.width,
 			height: data.height,
-			data: data.layers[0],
+			data: data.layers[0].data,
 		});
 
 		// Export the canvas to a Base64 PNG
@@ -101,6 +112,11 @@ export namespace ImageInterface {
 
 	export function indexInImage(instance: DrawingInterface, index: number) {
 		return index >= 0 && index < instance.image.bgData.length; // we can use bgData since it's the same size
+	}
+
+	export function flagLayerChange(layer: ImageLayer) {
+		layer._rev ??= layer.rev;
+		layer.rev = layer._rev + 1;
 	}
 
 	/**
@@ -141,7 +157,7 @@ export namespace ImageInterface {
 				ColorInterface.ncopyColor(
 					buffer,
 					writeIndex,
-					layer,
+					layer.data,
 					readIndex,
 					BlendMode.REPLACE,
 				);
@@ -149,13 +165,15 @@ export namespace ImageInterface {
 
 				// clear color
 				ColorInterface.nwriteColor(
-					layer,
+					layer.data,
 					readIndex,
 					clearColor,
 					BlendMode.REPLACE,
 				);
 			}
 		}
+
+		flagLayerChange(layer);
 
 		return {
 			width: clampedRegion.width,
@@ -204,11 +222,11 @@ export namespace ImageInterface {
 
 				// read color
 				const oldColor =
-					historize && ColorInterface.nreadColor(layer, writeIndex);
+					historize && ColorInterface.nreadColor(layer.data, writeIndex);
 
 				// write color
 				ColorInterface.ncopyColor(
-					layer,
+					layer.data,
 					writeIndex,
 					slice.data,
 					readIndex,
@@ -229,6 +247,8 @@ export namespace ImageInterface {
 				}
 			}
 		}
+
+		flagLayerChange(layer);
 	}
 
 	// #endregion
