@@ -2,13 +2,13 @@
 
 import { assert } from "../../lib/lang";
 import { AABB } from "../AABB";
+import { Vec2 } from "../Vec2";
 import { BlendMode } from "./color/BlendMode";
 import { Color, RGBColor } from "./color/Color";
+import { ColorInterface } from "./color/ColorInterface";
 import { DrawingHistory } from "./DrawingHistory";
 import { DrawingInterface } from "./DrawingInterface";
 import { RenderInterface } from "./RenderInterface";
-import { Vec2 } from "../Vec2";
-import { ColorInterface } from "./color/ColorInterface";
 
 export interface ImageInterfaceSlice {
 	data: Uint8ClampedArray;

@@ -1,8 +1,8 @@
-import { BlendMode } from "./BlendMode";
-import { RGBColor, Color } from "./Color";
 import { DrawingHistory } from "../DrawingHistory";
 import { DrawingInterface } from "../DrawingInterface";
 import { ImageInterface } from "../ImageInterface";
+import { BlendMode } from "./BlendMode";
+import { Color, RGBColor } from "./Color";
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ColorInterface {

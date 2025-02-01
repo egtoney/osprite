@@ -2,14 +2,17 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { useEventListener } from "../../hooks/useEventListener";
 import { Brush } from "../../interfaces/drawing/brush/Brush";
 import { ClipboardInterface } from "../../interfaces/drawing/ClipboardInterface";
-import { DrawingInterfaceContext } from "../../interfaces/drawing/react/DrawingInterfaceContext";
-import { RenderInterface } from "../../interfaces/drawing/RenderInterface";
-import { Vec2 } from "../../interfaces/Vec2";
-import "./PaintCanvas.css";
+import { CoordinateInterface } from "../../interfaces/drawing/CoordinateInterface";
+import { CursorInterface } from "../../interfaces/drawing/CursorInterface";
 import { DisplayInterface } from "../../interfaces/drawing/DisplayInterface";
 import { DrawingHistory } from "../../interfaces/drawing/DrawingHistory";
+import { DrawingInterfaceContext } from "../../interfaces/drawing/react/DrawingInterfaceContext";
+import { RenderInterface } from "../../interfaces/drawing/RenderInterface";
 import { SelectionInterface } from "../../interfaces/drawing/SelectionInterface";
-import { CursorInterface } from "../../interfaces/drawing/CursorInterface";
+import { Polygon } from "../../interfaces/Polygon";
+import { Vec2 } from "../../interfaces/Vec2";
+import { BootstrapIconArrowsMove } from "../icons/BootstrapIconArrowsMove";
+import "./PaintCanvas.css";
 
 export function PaintCanvas() {
 	const wrapperRef = useRef<HTMLDivElement>(null);
@@ -68,6 +71,57 @@ export function PaintCanvas() {
 		return () => window.removeEventListener("resize", handleResize);
 	}, [drawingInterface]);
 
+	// #region Arrow Keys Support
+
+	useEffect(() => {
+		const listener = (e: KeyboardEvent) => {
+			if (
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				["INPUT", "TEXTAREA"].includes((e.target as any).tagName) ||
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(e.target as any).isContentEditable
+			) {
+				return; // Ignore undo/redo inside text inputs
+			}
+
+			let dx = 0;
+			let dy = 0;
+
+			switch (e.key) {
+				case "ArrowRight":
+					dx++;
+					break;
+				case "ArrowLeft":
+					dx--;
+					break;
+				case "ArrowDown":
+					dy++;
+					break;
+				case "ArrowUp":
+					dy--;
+					break;
+			}
+
+			if (dx !== 0 || dy !== 0) {
+				if (drawingInterface.selection) {
+					// if there's a selection move the selection
+					SelectionInterface.moveSelection(drawingInterface, { x: dx, y: dy });
+				} else {
+					// otherwise move the display
+					drawingInterface.display.dx -= dx * drawingInterface.display.zoom;
+					drawingInterface.display.dy -= dy * drawingInterface.display.zoom;
+				}
+				RenderInterface.queueRender(drawingInterface);
+			}
+		};
+
+		document.addEventListener("keydown", listener);
+
+		return () => document.removeEventListener("keydown", listener);
+	}, [drawingInterface]);
+
+	// #endregion
+
 	// #region Undo/Redo Shortcut Support
 
 	useEffect(() => {
@@ -107,15 +161,10 @@ export function PaintCanvas() {
 
 	useEffect(() => {
 		const listener = async (e: ClipboardEvent) => {
-			const decoded = await ClipboardInterface.handlePaste(e);
+			const decoded = await ClipboardInterface.handlePasteEvent(e);
 
 			if (decoded) {
-				// clear current selection
-				SelectionInterface.clearSelection(drawingInterface);
-
-				// start a new selection with the pasted image
-				drawingInterface.selection = SelectionInterface.fromImage(decoded);
-				RenderInterface.queueRender(drawingInterface);
+				ClipboardInterface.applyPaste(drawingInterface, decoded);
 			}
 		};
 		document.addEventListener("paste", listener);
@@ -425,6 +474,16 @@ export function PaintCanvas() {
 		}
 	}, [drawingInterface]);
 
+	const hoveringSelection =
+		drawingInterface.selection &&
+		Polygon.contains(
+			drawingInterface.selection.points,
+			CoordinateInterface.imageCoords(drawingInterface),
+		);
+	const cursorIcon = hoveringSelection
+		? BootstrapIconArrowsMove
+		: Brush.iconFor(drawingInterface.brush.selected);
+
 	return (
 		<div ref={wrapperRef} className="wrapper-outer" style={{ zIndex: 50 }}>
 			<canvas
@@ -456,7 +515,7 @@ export function PaintCanvas() {
 					pointerEvents: "none",
 				}}
 			>
-				{Brush.iconFor(drawingInterface.brush.selected)()}
+				{cursorIcon()}
 			</div>
 			{touches.map((t) => (
 				<div

@@ -1,9 +1,8 @@
-import { assert } from "../../../../lib/lang";
 import { Polygon } from "../../../Polygon";
 import { Vec2 } from "../../../Vec2";
 import { CoordinateInterface } from "../../CoordinateInterface";
+import { DrawingHistory } from "../../DrawingHistory";
 import { DrawingInterface } from "../../DrawingInterface";
-import { ImageInterface, ImageInterfaceSlice } from "../../ImageInterface";
 import { SelectionInterface } from "../../SelectionInterface";
 import { BrushTrigger } from "../BrushTrigger";
 
@@ -47,18 +46,30 @@ export namespace Select {
 			if (instance.selection?.moving === true) {
 				// option 1: if we were moving a selection, end the move and update the location of the selection
 				instance.selection.moving = false;
-				instance.selection.points.forEach((pt) => {
-					pt.x += instance.selection!.translation.x;
-					pt.y += instance.selection!.translation.y;
+
+				const oldPoints = [...instance.selection.points];
+				const points = instance.selection.points.map((v) => {
+					return {
+						x: v.x + instance.selection!.translation.x,
+						y: v.y + instance.selection!.translation.y,
+					};
 				});
+
+				instance.selection.points = points;
 				instance.selection.translation = { x: 0, y: 0 };
+
+				// add to history
+				DrawingHistory.pushSelectionTransformation(
+					instance,
+					instance.selection.points,
+					oldPoints,
+				);
 			} else {
 				// option 2: start a new selection with the cursor coordinates
 
 				// before we can start a new selection we must end the previous selection
-				if (instance.selection !== undefined) {
-					SelectionInterface.clearSelection(instance);
-				}
+				const oldPoints = instance.selection?.points;
+				SelectionInterface.clearSelection(instance);
 
 				// compute selection polygon
 				const pt1 = Vec2.clamp(
@@ -82,29 +93,10 @@ export namespace Select {
 					pt2,
 					{ x: pt2.x, y: pt1.y },
 				];
-				const aabb = Polygon.toAabb(points);
 
-				// check that the new selection wasn't just an empty click
-				if (aabb.width === 0 || aabb.height === 0) {
-					return;
+				if (SelectionInterface.startSelection(instance, points)) {
+					DrawingHistory.pushSelection(instance, points, oldPoints);
 				}
-
-				// cut selection out of image
-				const data: ImageInterfaceSlice = ImageInterface.spliceLayer(
-					instance.image,
-					0,
-					aabb,
-				);
-				assert(data.data.length > 0);
-
-				// create the new selection
-				instance.selection = {
-					moving: false,
-					cursorOffset: { x: 0, y: 0 },
-					translation: { x: 0, y: 0 },
-					data,
-					points,
-				};
 			}
 		}
 	}

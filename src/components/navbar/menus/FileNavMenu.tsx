@@ -23,17 +23,17 @@ export function FileNavMenu() {
 			{/* actual menu */}
 			<NavMenu name="File" open={open} setOpen={setOpen}>
 				<NavMenuButton
-					name="new"
+					name="New"
 					setOpen={setOpen}
 					onClick={() => setNewFileVisible(true)}
 				></NavMenuButton>
 				<NavMenuButton
-					name="open"
+					name="Open"
 					setOpen={setOpen}
 					onClick={() => setOpenFileVisible(true)}
 				/>
 				<NavMenuButton
-					name="save"
+					name="Save"
 					setOpen={setOpen}
 					onClick={() => {
 						if (drawingInterface.save.name) {
@@ -44,7 +44,7 @@ export function FileNavMenu() {
 					}}
 				/>
 				<NavMenuButton
-					name="save as"
+					name="Save As"
 					setOpen={setOpen}
 					onClick={() => setSaveFileVisible(true)}
 				/>
@@ -54,9 +54,9 @@ export function FileNavMenu() {
 						borderBottom: "1px solid rgba(0, 0, 0, .2)",
 					}}
 				/>
-				<NavMenuButton name="upload" setOpen={setOpen} onClick={() => {}} />
+				<NavMenuButton name="Upload" setOpen={setOpen} onClick={() => {}} />
 				<NavMenuButton
-					name="download"
+					name="Download"
 					setOpen={setOpen}
 					onClick={() => {
 						FileInterface.downloadFile(drawingInterface);

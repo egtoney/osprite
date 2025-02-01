@@ -7,7 +7,7 @@ import { DisplayInterface } from "./DisplayInterface";
 import { ImageInterface } from "./ImageInterface";
 import { SaveInterface } from "./SaveInterface";
 import { SelectionInterface } from "./SelectionInterface";
-import { DrawingHistory } from "./DrawingHistory";
+import { ChangeSet } from "./DrawingHistory";
 import { BlendMode } from "./color/BlendMode";
 
 export interface DrawingInterface {
@@ -44,8 +44,8 @@ export interface DrawingInterface {
 		secondary: Color;
 	};
 	selection?: SelectionInterface;
-	history: DrawingHistory[];
-	undoHistory: DrawingHistory[];
+	history: ChangeSet[];
+	undoHistory: ChangeSet[];
 
 	saveHook?: () => unknown;
 	renderHook?: () => unknown;

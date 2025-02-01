@@ -23,23 +23,7 @@ export namespace CursorInterface {
 		instance.rawCursor.x = x;
 		instance.rawCursor.y = y;
 
-		// check if previous snippet is complete
-		if (
-			instance.history.length > 0 &&
-			instance.history[instance.history.length - 1].complete === false
-		) {
-			// undo last snippet
-			DrawingHistory.undo(instance);
-		}
-
-		// start a new snippet
-		instance.history.push({
-			changes: [],
-			complete: false,
-		});
-
-		// clear undo snippets
-		instance.undoHistory = [];
+		DrawingHistory.startChangeSet(instance);
 
 		// translate cursor location to be relative to drawing interface
 		instance.cursor.x = x - instance.display.dx - instance.display.left;
@@ -125,15 +109,7 @@ export namespace CursorInterface {
 		// Use the brush one last time at the end position. This was probably already done but some brushes only do something when they end.
 		BrushInterface.useBrush(instance, BrushTrigger.END);
 
-		// end the undo history record since it is complete
-		if (instance.history.length > 0) {
-			instance.history[instance.history.length - 1].complete = true;
-
-			// some brushes may not do anything (like phase one of select) so remove them
-			if (instance.history[instance.history.length - 1].changes.length === 0) {
-				instance.history.splice(instance.history.length - 1, 1);
-			}
-		}
+		DrawingHistory.endChangeSet(instance);
 
 		// flag that the brush is no longer pressed
 		instance.brush.press.pressed = false;
