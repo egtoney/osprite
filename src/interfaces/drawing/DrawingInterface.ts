@@ -9,6 +9,7 @@ import { SaveInterface } from "./SaveInterface";
 import { SelectionInterface } from "./SelectionInterface";
 import { ChangeSet } from "./DrawingHistory";
 import { BlendMode } from "./color/BlendMode";
+import { ToastInfo } from "../../components/util/toast/ToastContext";
 
 export interface DrawingInterface {
 	id: string;
@@ -49,6 +50,7 @@ export interface DrawingInterface {
 
 	saveHook?: () => unknown;
 	renderHook?: () => unknown;
+	addToast?: (toast: ToastInfo) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -243,6 +243,7 @@ export namespace ImageInterface {
 						y,
 						newColor,
 						oldColor as RGBColor,
+						true,
 					);
 				}
 			}

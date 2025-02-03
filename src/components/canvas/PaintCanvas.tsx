@@ -12,6 +12,7 @@ import { SelectionInterface } from "../../interfaces/drawing/SelectionInterface"
 import { Polygon } from "../../interfaces/Polygon";
 import { Vec2 } from "../../interfaces/Vec2";
 import { BootstrapIconArrowsMove } from "../icons/BootstrapIconArrowsMove";
+import { ToastContext } from "../util/toast/ToastContext";
 import "./PaintCanvas.css";
 
 export function PaintCanvas() {
@@ -21,6 +22,7 @@ export function PaintCanvas() {
 	const [canvasWidth, setCanvasWidth] = useState(320);
 	const [canvasHeight, setCanvasHeight] = useState(180);
 	const [drawingInterface] = useContext(DrawingInterfaceContext);
+	const addToast = useContext(ToastContext)[1];
 
 	const [startTouches, setStartTouches] = useState<Vec2[]>([]);
 	const [touches, setTouches] = useState<Vec2[]>([]);
@@ -40,6 +42,13 @@ export function PaintCanvas() {
 		y: 0,
 	});
 	const [isZooming, setIsZooming] = useState(false);
+
+	/**
+	 * Ensure drawing interface has access to toasts
+	 */
+	useEffect(() => {
+		drawingInterface.addToast = addToast;
+	}, [drawingInterface, addToast]);
 
 	/**
 	 * Resizes the game canvas to fill wrapper
@@ -175,39 +184,17 @@ export function PaintCanvas() {
 	useEffect(() => {
 		const listener = (e: ClipboardEvent) => {
 			e.preventDefault();
-
-			if (drawingInterface.selection && e.clipboardData) {
-				e.clipboardData.setData(
-					"text/plain",
-					RenderInterface.renderToCanvas(
-						null,
-						drawingInterface.selection.data,
-					).toDataURL("image/png"),
-				);
-			}
+			ClipboardInterface.copy(drawingInterface);
 		};
 		document.addEventListener("copy", listener);
 
 		return () => document.removeEventListener("copy", listener);
-	}, [drawingInterface]);
+	}, [drawingInterface, addToast]);
 
 	useEffect(() => {
 		const listener = (e: ClipboardEvent) => {
 			e.preventDefault();
-
-			if (drawingInterface.selection && e.clipboardData) {
-				// same as above in copy
-				e.clipboardData.setData(
-					"text/plain",
-					RenderInterface.renderToCanvas(
-						null,
-						drawingInterface.selection.data,
-					).toDataURL("image/png"),
-				);
-
-				// difference, clear selection
-				delete drawingInterface.selection;
-			}
+			ClipboardInterface.cut(drawingInterface);
 		};
 		document.addEventListener("cut", listener);
 

@@ -1,3 +1,5 @@
+import { ToastLevel } from "../../components/util/toast/Toast";
+import { DrawingHistory } from "./DrawingHistory";
 import { DrawingInterface } from "./DrawingInterface";
 import { ImageInterface, ImageInterfaceSlice } from "./ImageInterface";
 import { RenderInterface } from "./RenderInterface";
@@ -62,12 +64,30 @@ export namespace ClipboardInterface {
 		instance: DrawingInterface,
 		decoded: ImageInterfaceSlice,
 	) {
+		DrawingHistory.startChangeSet(instance);
+
 		// clear current selection
 		SelectionInterface.clearSelection(instance);
 
 		// start a new selection with the pasted image
 		instance.selection = SelectionInterface.fromImage(decoded);
+
+		const selectionHistory =
+			instance.history[instance.history.length - 1].selection!;
+		selectionHistory.points = [...instance.selection.points];
+		selectionHistory.data = instance.selection.data;
+
 		RenderInterface.queueRender(instance);
+
+		DrawingHistory.endChangeSet(instance);
+
+		// alert the user
+		if (instance.addToast) {
+			instance.addToast({
+				level: ToastLevel.SUCCESS,
+				text: "Pasted Selection",
+			});
+		}
 	}
 
 	export async function paste(instance: DrawingInterface) {
@@ -86,7 +106,10 @@ export namespace ClipboardInterface {
 		}
 	}
 
-	export async function copy(instance: DrawingInterface) {
+	export async function copy(
+		instance: DrawingInterface,
+		alertUser: boolean = true,
+	) {
 		if (instance.selection) {
 			// write to clipboard
 			await navigator.clipboard.write([
@@ -97,16 +120,33 @@ export namespace ClipboardInterface {
 					).toDataURL("image/png"),
 				}),
 			]);
+
+			// alert user
+			if (instance.addToast && alertUser) {
+				instance.addToast({
+					level: ToastLevel.SUCCESS,
+					text: "Copied Selection",
+				});
+			}
 		}
 	}
 
 	export async function cut(instance: DrawingInterface) {
-		await copy(instance);
+		await copy(instance, false);
 
 		if (instance.selection) {
 			// difference, clear selection
 			delete instance.selection;
 			RenderInterface.queueRender(instance);
+
+			// alert user
+			console.log(instance.addToast);
+			if (instance.addToast) {
+				instance.addToast({
+					level: ToastLevel.SUCCESS,
+					text: "Cut Selection",
+				});
+			}
 		}
 	}
 }

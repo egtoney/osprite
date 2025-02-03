@@ -3,6 +3,7 @@ import PouchDB from "pouchdb";
 import { DrawingInterface } from "./DrawingInterface";
 import { ImageInterface } from "./ImageInterface";
 import { assert } from "../../lib/lang";
+import { ToastLevel } from "../../components/util/toast/Toast";
 
 export namespace FileInterface {
 	const db = new PouchDB("local");
@@ -70,8 +71,6 @@ export namespace FileInterface {
 				force: true,
 			},
 		);
-
-		console.log("saved context");
 	}
 
 	export async function getContext(): Promise<DrawingInterface[]> {
@@ -115,11 +114,15 @@ export namespace FileInterface {
 			...clean([context])[0],
 		};
 
-		console.log(doc);
-
 		await db.put(doc);
 
-		console.log("saved", context.save.name);
+		// alert user
+		if (context.addToast) {
+			context.addToast({
+				level: ToastLevel.SUCCESS,
+				text: `Saved: ${context.save.name}`,
+			});
+		}
 	}
 
 	export async function getFiles() {

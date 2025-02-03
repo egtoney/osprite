@@ -1,3 +1,4 @@
+import { ToastLevel } from "../../components/util/toast/Toast";
 import { assert } from "../../lib/lang";
 import { Polygon } from "../Polygon";
 import { Vec2 } from "../Vec2";
@@ -5,6 +6,7 @@ import { BlendMode } from "./color/BlendMode";
 import { Color, RGBColor } from "./color/Color";
 import { ColorInterface } from "./color/ColorInterface";
 import { DrawingInterface } from "./DrawingInterface";
+import { ImageInterfaceSlice } from "./ImageInterface";
 import { RenderInterface } from "./RenderInterface";
 import { SaveInterface } from "./SaveInterface";
 import { SelectionInterface } from "./SelectionInterface";
@@ -15,8 +17,9 @@ export interface ColorChange extends Vec2 {
 }
 
 export interface SelectionChange {
-	points: Polygon;
+	points?: Polygon;
 	oldPoints?: Polygon;
+	data?: ImageInterfaceSlice;
 }
 
 export interface SelectionTransformChange {
@@ -63,8 +66,6 @@ export namespace DrawingHistory {
 	}
 
 	export function endChangeSet(instance: DrawingInterface) {
-		console.log("ending change set", instance.history.length);
-
 		// end the undo history record since it is complete
 		if (instance.history.length > 0) {
 			const history = instance.history[instance.history.length - 1];
@@ -89,8 +90,16 @@ export namespace DrawingHistory {
 					shouldRemove = history.selectionTransform === undefined;
 					break;
 				default:
+					shouldRemove = true;
 					break;
 			}
+
+			console.log(
+				"ending change set",
+				instance.history.length,
+				shouldRemove,
+				history,
+			);
 
 			// remove if flagged as a no-op
 			if (shouldRemove) {
@@ -115,7 +124,7 @@ export namespace DrawingHistory {
 		assert(
 			history.type === undefined ||
 				history.type === ChangeType.SELECTION_TRANSFORM,
-			"can not push a selection into this changeset",
+			`can not push a selection transformation into this changeset (type: ${history.type}) expected ${ChangeType.SELECTION_TRANSFORM}`,
 		);
 		history.type = ChangeType.SELECTION_TRANSFORM;
 
@@ -138,8 +147,9 @@ export namespace DrawingHistory {
 
 	export function pushSelection(
 		instance: DrawingInterface,
-		points: Polygon,
+		points?: Polygon,
 		oldPoints?: Polygon,
+		data?: ImageInterfaceSlice,
 	) {
 		// do nothing if no history event to record into
 		if (instance.history.length === 0) {
@@ -155,7 +165,7 @@ export namespace DrawingHistory {
 		// ensure changeset type stability
 		assert(
 			history.type === undefined || history.type === ChangeType.SELECTION,
-			"can not push a selection into this changeset",
+			`can not push a selection into this changeset (type: ${history.type}) expected ${ChangeType.SELECTION}`,
 		);
 		history.type = ChangeType.SELECTION;
 
@@ -166,7 +176,7 @@ export namespace DrawingHistory {
 		);
 
 		// actually record the change
-		history.selection = { points, oldPoints };
+		history.selection = { points, oldPoints, data };
 	}
 
 	export function pushChange(
@@ -176,6 +186,7 @@ export namespace DrawingHistory {
 		y: number,
 		newColor: RGBColor,
 		oldColor: RGBColor,
+		includeNoOp: boolean = false,
 	) {
 		// do nothing if no history event to record into
 		if (instance.history.length === 0) {
@@ -186,12 +197,12 @@ export namespace DrawingHistory {
 		// ensure changeset type stability
 		assert(
 			history.type === undefined || history.type === ChangeType.PIXEL,
-			"can not push a selection into this changeset",
+			`can not push a change into this changeset (type: ${history.type}) expected ${ChangeType.PIXEL}`,
 		);
 		history.type = ChangeType.PIXEL;
 
 		// do nothing if colors are equal
-		if (Color.equal(newColor, oldColor)) {
+		if (Color.equal(newColor, oldColor) && !includeNoOp) {
 			return;
 		}
 
@@ -218,33 +229,31 @@ export namespace DrawingHistory {
 		// pop last element
 		const [history] = instance.history.splice(instance.history.length - 1, 1);
 
+		console.log(instance.history);
 		console.log("undo", history.type, history);
+		let userMessage;
 
-		// undo pixel changes
-		if (history.changes) {
-			assert(
-				history.type === ChangeType.PIXEL ||
-					history.type === ChangeType.SELECTION,
+		// undo selection transformations
+		if (history.selectionTransform) {
+			assert(history.type === ChangeType.SELECTION_TRANSFORM);
+			userMessage = "Undid Selection Transform";
+			console.log(userMessage);
+
+			// assert that there is a selection to modify
+			assert(instance.selection);
+
+			// reset translation to previous value
+			SelectionInterface.updateSelection(
+				instance,
+				history.selectionTransform.oldPoints,
 			);
-
-			// don't apply pixels when undoing a SELECT
-			if (history.type === ChangeType.PIXEL) {
-				for (const change of history.changes) {
-					ColorInterface.setColor(
-						instance,
-						change.x,
-						change.y,
-						change.oldColor,
-						false,
-						BlendMode.REPLACE,
-					);
-				}
-			}
 		}
 
 		// undo selection
 		if (history.selection) {
 			assert(history.type === ChangeType.SELECTION);
+			userMessage = "Undid Selection";
+			console.log(userMessage);
 
 			// apply last selection if one was set
 			if (history.selection.oldPoints) {
@@ -257,24 +266,40 @@ export namespace DrawingHistory {
 			}
 		}
 
-		// undo selection transformations
-		if (history.selectionTransform) {
-			assert(history.type === ChangeType.SELECTION_TRANSFORM);
-
-			// assert that there is a selection to modify
-			assert(instance.selection);
-
-			// reset translation to previous value
-			SelectionInterface.updateSelection(
-				instance,
-				history.selectionTransform.oldPoints,
+		// undo pixel changes
+		if (history.changes) {
+			assert(
+				history.type === ChangeType.PIXEL ||
+					history.type === ChangeType.SELECTION,
 			);
+
+			// don't apply pixels when undoing a SELECT
+			userMessage = "Undid Brush Changes";
+			console.log(userMessage);
+			for (const change of history.changes) {
+				ColorInterface.setColor(
+					instance,
+					change.x,
+					change.y,
+					change.oldColor,
+					false,
+					BlendMode.REPLACE,
+				);
+			}
 		}
 
 		// push onto the undo history buffer
 		instance.undoHistory.push(history);
 		SaveInterface.save(instance);
 		RenderInterface.queueRender(instance);
+
+		// alert the user
+		if (instance.addToast && userMessage) {
+			instance.addToast({
+				level: ToastLevel.INFO,
+				text: userMessage,
+			});
+		}
 	}
 
 	export function canRedo(instance: DrawingInterface) {
@@ -293,7 +318,9 @@ export namespace DrawingHistory {
 			1,
 		);
 
+		console.log(instance.undoHistory);
 		console.log("redo", history.type, history);
+		let userMessage;
 
 		// undo pixel changes
 		if (history.changes) {
@@ -303,29 +330,59 @@ export namespace DrawingHistory {
 			);
 
 			// don't change pixels with selection
-			for (const change of history.changes) {
-				ColorInterface.setColor(
-					instance,
-					change.x,
-					change.y,
-					change.color,
-					false,
-					BlendMode.REPLACE,
-				);
+			if (history.type === ChangeType.PIXEL) {
+				userMessage = "Redid Brush Changes";
+				console.log(userMessage);
+				for (const change of history.changes) {
+					ColorInterface.setColor(
+						instance,
+						change.x,
+						change.y,
+						change.color,
+						false,
+						BlendMode.REPLACE,
+					);
+				}
 			}
 		}
 
-		// undo selection
+		// redo selection
 		if (history.selection) {
 			assert(history.type === ChangeType.SELECTION);
 
-			// apply last selection if one was set
-			SelectionInterface.startSelection(instance, history.selection.points);
+			if (history.selection.points) {
+				// apply last selection if one was set
+
+				// apply selection data if present
+				if (history.selection.data) {
+					userMessage = "Redid Paste";
+
+					SelectionInterface.clearSelection(instance);
+
+					// create the new selection
+					instance.selection = {
+						moving: false,
+						cursorOffset: { x: 0, y: 0 },
+						translation: { x: 0, y: 0 },
+						data: history.selection.data,
+						points: history.selection.points,
+					};
+				} else {
+					userMessage = "Redid Selection";
+					SelectionInterface.startSelection(instance, history.selection.points);
+				}
+			} else {
+				userMessage = "Redid Selection Clear";
+				SelectionInterface.clearSelection(instance, false);
+			}
+			console.log(userMessage);
 		}
 
-		// undo selection transformations
+		// redo selection transformations
 		if (history.selectionTransform) {
 			assert(history.type === ChangeType.SELECTION_TRANSFORM);
+			userMessage = "Redid Selection Transform";
+			console.log(userMessage);
 
 			// assert that there is a selection to modify
 			assert(instance.selection);
@@ -341,5 +398,13 @@ export namespace DrawingHistory {
 		instance.history.push(history);
 		SaveInterface.save(instance);
 		RenderInterface.queueRender(instance);
+
+		// alert user
+		if (instance.addToast && userMessage) {
+			instance.addToast({
+				level: ToastLevel.INFO,
+				text: userMessage,
+			});
+		}
 	}
 }

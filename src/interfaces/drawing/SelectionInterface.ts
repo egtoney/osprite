@@ -1,6 +1,7 @@
 import { assert } from "../../lib/lang";
 import { Polygon } from "../Polygon";
 import { Vec2 } from "../Vec2";
+import { DrawingHistory } from "./DrawingHistory";
 import { DrawingInterface } from "./DrawingInterface";
 import { ImageInterface, ImageInterfaceSlice } from "./ImageInterface";
 
@@ -30,17 +31,25 @@ export namespace SelectionInterface {
 		};
 	}
 
-	export function clearSelection(instance: DrawingInterface): boolean {
+	export function clearSelection(
+		instance: DrawingInterface,
+		historize: boolean = true,
+	): boolean {
 		if (instance.selection) {
 			ImageInterface.insertIntoLayer(
 				instance,
 				0,
 				Polygon.toAabb(instance.selection.points),
 				instance.selection.data,
-				true,
+				historize,
 			);
 
+			const points = [...instance.selection.points];
 			delete instance.selection;
+
+			if (historize) {
+				DrawingHistory.pushSelection(instance, undefined, points);
+			}
 
 			return true;
 		}
